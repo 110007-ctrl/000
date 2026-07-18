@@ -74,6 +74,7 @@ import com.celzero.firestack.backend.Backend
 import com.celzero.firestack.backend.RouterStats
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
@@ -100,6 +101,10 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
         // Reserved ID for the WARP SOCKS5 proxy row. Negative so Room's auto-increment
         // (which starts at 1) never collides with the user's custom proxy entries.
         private const val WARP_PROXY_ID = -1
+        // How long to wait, and how often to re-poll, for UsqueManager.isRunning() to settle
+        // after enabling WARP before trusting it in updateWarpUi() (see the io{} block below).
+        private const val WARP_SETTLE_TIMEOUT_MS = 3000L
+        private const val WARP_SETTLE_POLL_MS = 200L
     }
 
     private fun Context.isDarkThemeOn(): Boolean {
@@ -474,6 +479,19 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
                             latency = 0
                         )
                         appConfig.updateCustomSocks5Proxy(warpProxy)
+                        // Bug: on the very first enable, the switch flipped back to OFF even
+                        // though WARP genuinely connected a moment later - it also stayed wrong
+                        // until a second tap re-checked it. updateCustomSocks5Proxy() can trigger
+                        // BraveVPNService to rebuild the tunnel around the new proxy, which can
+                        // briefly cycle the usque process before things settle. Calling
+                        // updateWarpUi() immediately could land in that gap and read
+                        // isRunning()=false, then nothing re-checked it afterwards. Give it a
+                        // short window to settle and re-confirm before trusting it in the UI.
+                        var waitedMs = 0L
+                        while (!UsqueManager.isRunning() && waitedMs < WARP_SETTLE_TIMEOUT_MS) {
+                            delay(WARP_SETTLE_POLL_MS)
+                            waitedMs += WARP_SETTLE_POLL_MS
+                        }
                     }
                     uiCtx {
                         isWarpStarting = false
