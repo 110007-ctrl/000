@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.celzero.bravedns">
+
+    <permission
+        android:name="com.celzero.bravedns.CONTROL_VPN"
+        android:protectionLevel="normal" />
+
+    <!-- allowBackup/dataExtractionRules/fullBackupContent explicit for SAST coverage. -->
+    <application
+        android:name=".RethinkDnsApplication"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:networkSecurityConfig="@xml/network_security_config">
+        <!--
+            ExportedContentProvider suppressed: These three providers are intentionally
+            exported so that the headless/automation API works across process boundaries.
+            Each is guarded by the custom CONTROL_VPN permission (protectionLevel="normal"),
+            so only callers that explicitly declare <uses-permission> for it can access them.
+        -->
+        <provider
+            android:name=".provider.ApplicationProvider"
+            android:authorities="com.celzero.bravedns.appprovider"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="com.celzero.bravedns.CONTROL_VPN"
+            tools:ignore="ExportedContentProvider" />
+        <provider
+            android:name=".provider.BlocklistProvider"
+            android:authorities="com.celzero.bravedns.blocklistprovider"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="com.celzero.bravedns.CONTROL_VPN"
+            tools:ignore="ExportedContentProvider" />
+        <provider
+            android:name=".provider.DomainRuleProvider"
+            android:authorities="com.celzero.bravedns.domainrulesprovider"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="com.celzero.bravedns.CONTROL_VPN"
+            tools:ignore="ExportedContentProvider" />
+
+        <!--
+            ExportedReceiver suppressed: BraveStartReceiver is the public headless API
+            entry point. Access is restricted to callers holding the CONTROL_VPN permission.
+        -->
+        <receiver
+            android:name=".receiver.BraveStartReceiver"
+            android:exported="true"
+            android:permission="com.celzero.bravedns.CONTROL_VPN"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="com.celzero.bravedns.intent.action.START_VPN" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

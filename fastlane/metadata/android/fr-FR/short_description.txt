@@ -1,0 +1,1 @@
+Apps pare-feu, utiliser WireGuardVPN, surveiller réseau, bloquer malware, changer DNS.

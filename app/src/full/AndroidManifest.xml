@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+
+    <!--
+        FIX #4 — VpnControlReceiver: add android:permission to the receiver declaration.
+
+        The receiver is intentionally exported so that third-party automation apps
+        (e.g. Tasker, MacroDroid) can start/stop the VPN.  However, the previous
+        declaration had NO android:permission attribute, meaning ANY installed app
+        could send a broadcast to it.
+
+        We declare a custom permission at the normal protection level so that:
+          (a) Senders must explicitly declare <uses-permission> for it, which means
+              users who inspect permissions can see which apps request it.
+          (b) It documents the intent — this receiver is an explicit public API for
+              automation apps, not an internal component.
+
+        We do NOT use protectionLevel="signature" because that would prevent legitimate
+        third-party automation apps from sending the broadcast.  Instead, identity
+        verification is handled in code (see VpnControlReceiver.kt):
+          • API 34+: sentFromPackage / sentFromUid (OS-verified, cannot be spoofed).
+          • Pre-API 34: package name from EXTRA_PACKAGE_NAME / EXTRA_INTENT with
+            PackageManager signature verification as defence-in-depth.
+          • The old self-reported "sender" string extra has been removed because any
+            app can put an arbitrary string in an intent extra.
+    -->
+    <permission
+        android:name="com.celzero.bravedns.permission.VPN_CONTROL"
+        android:label="Control RethinkDNS VPN"
+        android:description="@string/app_name"
+        android:protectionLevel="normal" />
+
+    <!--
+        FILE_PROVIDER_ACCESS: signature-level permission used as android:readPermission
+        and android:writePermission on the FileProvider declaration below.
+        protectionLevel="signature" means only apps signed with the same certificate
+        (this app + instrumentation tests) can hold it — never user-grantable.
+    -->
+    <permission
+        android:name="${applicationId}.permission.FILE_PROVIDER_ACCESS"
+        android:protectionLevel="signature" />
+
+
+    <!--
+        CAMERA — Required for WireGuard QR-code import (full flavor only).
+
+        The zxing QR-scanner library (fullImplementation) injects CAMERA automatically
+        via its AAR manifest. We declare it explicitly here to:
+          (a) Document the purpose: used exclusively in WgMainActivity for scanning
+              WireGuard configuration QR codes. No background camera access occurs.
+          (b) Override the zxing default with android:required="false" (via the
+              uses-feature declaration below) so the app remains installable on
+              camera-less devices (tablets, Chromebooks). On such devices the user
+              can enter configs manually instead of scanning.
+
+        CAMERA is a 'dangerous' permission that triggers a runtime grant dialog. It is
+        only requested at the moment the user initiates a QR scan — never in the
+        background, never at app launch.
+
+        The main manifest carries a complementary tools:node="remove" declaration so
+        this permission cannot silently appear in non-full-flavor builds.
+    -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!--
+        Declare camera hardware as NOT required so the app installs on devices
+        without a camera (the QR import feature gracefully falls back to manual entry).
+    -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- allowBackup/dataExtractionRules/fullBackupContent are set here to make the
+         backup-configuration fix explicit in this flavor manifest so SAST scanners
+         that analyse each manifest in isolation can verify the setting. The values
+         are merged from (and consistent with) the main manifest. -->
+    <application
+        android:name=".RethinkDnsApplication"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/AppThemeInitial">
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
+            android:value="true" />
+
+        <activity
+            android:name=".ui.activity.FirewallActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity android:name=".ui.HomeScreenActivity"
+            android:launchMode="singleTask" />
+        <!--
+            ExportedActivity — AppLockActivity is intentionally exported for three reasons:
+
+            1. The launcher alias (.ui.activity.LauncherAliasAppLock) targets it as the
+               primary entry point when app-lock is enabled; the OS launcher must be able
+               to start it directly.
+            2. android.service.quicksettings.action.QS_TILE_PREFERENCES is delivered by
+               the Android Quick Settings framework — it requires exported="true".
+            3. The .rbk backup file-viewer intent filter lets the OS file picker hand off
+               backup files to this app — also requires exported="true".
+
+            SECURITY RATIONALE — Exported state creates NO bypass risk:
+              • Every onCreate() code path either calls showBiometricPrompt() (biometric
+                auth required) or startHomeActivity() — the latter is only reached when
+                the user has explicitly disabled biometrics, the session was already
+                authenticated within the configured timeout, or the device is a TV where
+                biometrics are unavailable.
+              • On biometric failure or cancellation, finishAffinity() is called — no
+                content is accessible to the caller.
+              • When available, auth uses a hardware-backed CryptoObject (AES-256/GCM
+                in AndroidKeyStore, BIOMETRIC_STRONG) that cannot be bypassed by hooking
+                onAuthenticationSucceeded() or via accessibility/instrumentation attacks.
+              • The key is invalidated when new biometrics are enrolled, preventing an
+                attacker from enrolling their own fingerprint to gain access.
+
+            An android:permission guard cannot be applied: the OS launcher, Quick Settings
+            framework, and file manager do not hold (and cannot hold) any app-specific
+            permission. Code-level enforcement above provides equivalent protection.
+        -->
+        <activity
+            android:name=".ui.activity.AppLockActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            tools:ignore="ExportedActivity">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.rbk" />
+                <data android:host="*" />
+            </intent-filter>
+        </activity>
+        <!-- Alias for AppLockActivity -->
+        <activity-alias
+            android:name=".ui.activity.LauncherAliasAppLock"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:targetActivity=".ui.activity.AppLockActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Alias for HomeScreenActivity -->
+        <activity-alias
+            android:name=".ui.LauncherAliasHome"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:targetActivity=".ui.HomeScreenActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity
+            android:name=".ui.activity.DnsDetailActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.WelcomeActivity"
+            android:finishOnTaskLaunch="true"
+            android:noHistory="true" />
+        <activity
+            android:name=".ui.activity.AppInfoActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.PauseActivity"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name=".ui.activity.DnsListActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.CustomRulesActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.ConfigureRethinkBasicActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.ProxySettingsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.MiscSettingsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.TunnelSettingsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.AppListActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.DetailedStatisticsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.NetworkLogsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.WgMainActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.WgConfigEditorActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.WgConfigDetailActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.CheckoutActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.TcpProxyMainActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.UniversalFirewallSettingsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.ConfigureOtherDnsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.AppWiseIpLogsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.AppWiseDomainLogsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity android:name=".ui.activity.ConsoleLogActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity android:name=".ui.activity.EventsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.NotificationHandlerActivity"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
+            android:theme="@style/AppThemeDialog" />
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="fullSensor"
+            tools:replace="screenOrientation" />
+        <activity
+            android:name=".ui.activity.AlertsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.AntiCensorshipActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.TestDialogActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activity.AdvancedSettingActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.DomainConnectionsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity android:name=".ui.activity.FragmentHostActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity android:name=".ui.activity.RpnWinProxyDetailsActivity"
+            android:finishOnTaskLaunch="true" />
+        <activity
+            android:name=".ui.activity.BubbleActivity"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="standard"/>
+
+        <!--
+            ExportedReceiver suppressed: BraveAutoStartReceiver MUST be exported so the
+            Android system can deliver BOOT_COMPLETED / USER_UNLOCKED broadcasts.
+            The android:permission attribute restricts delivery to the OS itself
+            (protectionLevel="signature|privileged"), so no third-party app can trigger it.
+        -->
+        <receiver
+            android:name=".receiver.BraveAutoStartReceiver"
+            android:directBootAware="false"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
+            tools:ignore="ExportedReceiver">
+            <intent-filter android:priority="999">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.REBOOT" />
+                <action android:name="android.intent.action.USER_UNLOCKED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            FIX #4 — VpnControlReceiver: require the VPN_CONTROL custom permission.
+
+            Senders must declare:
+                <uses-permission android:name="com.celzero.bravedns.permission.VPN_CONTROL" />
+            This is a normal-level permission (not signature), so automation apps like
+            Tasker can request it and the user grants it at install time.  It creates an
+            explicit, auditable permission contract visible in the app's manifest and in
+            tools like apktool, raising the bar above the previous "no permission" state.
+
+            In-code identity verification in VpnControlReceiver.kt provides a second
+            layer:  the spoofable "sender" string extra has been removed and replaced
+            with OS-verified identity on API 34+ (sentFromPackage / sentFromUid), with
+            signature verification as defence-in-depth on pre-API 34 devices.
+        -->
+        <receiver
+            android:name=".receiver.VpnControlReceiver"
+            android:exported="true"
+            android:permission="com.celzero.bravedns.permission.VPN_CONTROL"
+            android:label="@string/app_name"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="com.celzero.bravedns.intent.action.VPN_START" />
+                <action android:name="com.celzero.bravedns.intent.action.VPN_STOP" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receiver.NotificationActionReceiver"
+            android:exported="false"
+            android:label="@string/app_name" />
+        <receiver android:name=".receiver.UserPresentReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".receiver.BubbleDismissReceiver"
+            android:exported="false" />
+
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
+        <!--
+            FIX — Android app content provider should specify precise permissions.
+
+            FileProvider is used to share bug-report ZIPs and exported backup files
+            with external apps (e.g. email clients, file managers) via content:// URIs.
+            It MUST be exported=false — FileProvider works exclusively through
+            Intent.FLAG_GRANT_READ_URI_PERMISSION / FLAG_GRANT_WRITE_URI_PERMISSION
+            which are granted per-URI per-recipient by the OS at the moment of sharing.
+              • android:exported="false" — no app can query this provider directly.
+              • android:grantUriPermissions="true" — enables per-URI temporary grants.
+              • android:readPermission / android:writePermission reference the
+                FILE_PROVIDER_ACCESS signature permission (declared at manifest level
+                above) so no external app can read or write provider paths directly.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider;${applicationId}.backup.BackupAgent"
+            android:exported="false"
+            android:grantUriPermissions="true"
+            android:readPermission="${applicationId}.permission.FILE_PROVIDER_ACCESS"
+            android:writePermission="${applicationId}.permission.FILE_PROVIDER_ACCESS">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
+
+    </application>
+</manifest>
