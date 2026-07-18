@@ -393,8 +393,6 @@
     <string name="dns_proxy_remove_dialog_message" translatable="true">Delete the DNS Proxy from saved configuration.</string>
     <string name="dns_proxy_remove_success" translatable="true">DNS Proxy deleted.</string>
 
-    <string name="local_blocklist_download" translatable="true">Download Blocklists</string>
-    <string name="local_blocklist_download_desc" translatable="true">Download blocklists (around 60MB) to use this feature?</string>
 
     <string name="local_blocklist_redownload" translatable="true">Up-to-date!</string>
     <string name="local_blocklist_redownload_desc" translatable="true">On-device blocklists are already at the latest version v%1$s.</string>
@@ -785,8 +783,6 @@
 
     <string name="dc_entries" translatable="true">%1$s entries »</string>
 
-    <string name="dc_local_block_heading" translatable="true">On-device blocklists</string>
-    <string name="dc_local_block_desc_1" translatable="true">Choose from 195+ blocklists. Click here to download or configure blocklists.</string>
 
     <string name="dc_custom_block_heading" translatable="true">Domain rules</string>
 
@@ -1960,8 +1956,6 @@
     <string name="settings_allow_incoming_wg_packets" translatable="true">WireGuard P2P</string>
     <string name="settings_allow_incoming_wg_packets_desc" translatable="true">When enabled, allow incoming connections initiated by WireGuard peers.</string>
 
-    <string name="lockdown_download_message" translatable="true">Android\'s built-in <i>Download Manager</i> may fail as VPN is in <i>Lockdown</i> mode. Enable Rethink\'s downloader instead?</string>
-    <string name="lockdown_download_enable_inapp" translatable="true">Enable Downloader</string>
 
     <string name="settings_jumbo_packets" translatable="true">Bandwidth booster</string>
     <string name="settings_jumbo_packets_desc" translatable="true">Uses <i>jumbo packets</i> within Rethink\'s VPN tunnel.</string>

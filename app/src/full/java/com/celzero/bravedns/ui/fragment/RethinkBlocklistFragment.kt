@@ -31,27 +31,17 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.filter
 import androidx.recyclerview.widget.RecyclerView
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.celzero.bravedns.R
-import com.celzero.bravedns.adapter.LocalAdvancedViewAdapter
-import com.celzero.bravedns.adapter.LocalSimpleViewAdapter
-import com.celzero.bravedns.adapter.RemoteAdvancedViewAdapter
 import com.celzero.bravedns.adapter.RemoteSimpleViewAdapter
-import com.celzero.bravedns.customdownloader.LocalBlocklistCoordinator.Companion.CUSTOM_DOWNLOAD
 import com.celzero.bravedns.data.AppConfig
 import com.celzero.bravedns.data.FileTag
 import com.celzero.bravedns.databinding.FragmentRethinkBlocklistBinding
-import com.celzero.bravedns.download.AppDownloadManager
-import com.celzero.bravedns.download.DownloadConstants.Companion.DOWNLOAD_TAG
-import com.celzero.bravedns.download.DownloadConstants.Companion.FILE_TAG
 import com.celzero.bravedns.service.PersistentState
 import com.celzero.bravedns.service.RethinkBlocklistManager
 import com.celzero.bravedns.service.RethinkBlocklistManager.RethinkBlocklistType.Companion.getType
 import com.celzero.bravedns.service.RethinkBlocklistManager.getStamp
 import com.celzero.bravedns.service.RethinkBlocklistManager.getTagsFromStamp
-import com.celzero.bravedns.service.VpnController
 import com.celzero.bravedns.ui.activity.ConfigureRethinkBasicActivity.Companion.RETHINK_BLOCKLIST_NAME
 import com.celzero.bravedns.ui.activity.ConfigureRethinkBasicActivity.Companion.RETHINK_BLOCKLIST_TYPE
 import com.celzero.bravedns.ui.activity.ConfigureRethinkBasicActivity.Companion.RETHINK_BLOCKLIST_URL
@@ -64,14 +54,10 @@ import com.celzero.bravedns.util.Constants.Companion.RETHINK_STAMP_VERSION
 import com.celzero.bravedns.util.CustomLinearLayoutManager
 import com.celzero.bravedns.util.UIUtils
 import com.celzero.bravedns.util.UIUtils.fetchToggleBtnColors
-import com.celzero.bravedns.util.UIUtils.htmlToSpannedText
 import com.celzero.bravedns.util.Utilities.getRemoteBlocklistStamp
-import com.celzero.bravedns.util.Utilities.hasLocalBlocklists
 import com.celzero.bravedns.util.Utilities.hasRemoteBlocklists
 import com.celzero.bravedns.util.Utilities.showToastUiCentered
-import com.celzero.bravedns.viewmodel.LocalBlocklistPacksMapViewModel
 import com.celzero.bravedns.viewmodel.RemoteBlocklistPacksMapViewModel
-import com.celzero.bravedns.viewmodel.RethinkLocalFileTagViewModel
 import com.celzero.bravedns.viewmodel.RethinkRemoteFileTagViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -89,7 +75,6 @@ class RethinkBlocklistFragment :
     private val b by viewBinding(FragmentRethinkBlocklistBinding::bind)
 
     private val persistentState by inject<PersistentState>()
-    private val appDownloadManager by inject<AppDownloadManager>()
     private val appConfig by inject<AppConfig>()
 
     private var type: RethinkBlocklistManager.RethinkBlocklistType =
@@ -99,15 +84,10 @@ class RethinkBlocklistFragment :
 
     private val filters = MutableLiveData<Filters>()
 
-    private var advanceRemoteViewAdapter: RemoteAdvancedViewAdapter? = null
-    private var advanceLocalViewAdapter: LocalAdvancedViewAdapter? = null
-    private var localSimpleViewAdapter: LocalSimpleViewAdapter? = null
     private var remoteSimpleViewAdapter: RemoteSimpleViewAdapter? = null
 
     private val remoteFileTagViewModel: RethinkRemoteFileTagViewModel by viewModel()
-    private val localFileTagViewModel: RethinkLocalFileTagViewModel by viewModel()
     private val remoteBlocklistPacksMapViewModel: RemoteBlocklistPacksMapViewModel by viewModel()
-    private val localBlocklistPacksMapViewModel: LocalBlocklistPacksMapViewModel by viewModel()
 
     private var modifiedStamp: String = ""
 
@@ -180,10 +160,6 @@ class RethinkBlocklistFragment :
     }
 
     private fun initObservers() {
-        if (type.isLocal()) {
-            observeWorkManager()
-        }
-
         selectedFileTags.observe(viewLifecycleOwner) {
             if (it == null) return@observe
 
@@ -193,28 +169,15 @@ class RethinkBlocklistFragment :
         filters.observe(viewLifecycleOwner) {
             if (it == null) return@observe
 
-            if (type.isRemote()) {
-                remoteFileTagViewModel.setFilter(it)
-                b.lbAdvancedRecycler.smoothScrollToPosition(0)
-            } else {
-                localFileTagViewModel.setFilter(it)
-                b.lbAdvancedRecycler.smoothScrollToPosition(0)
-            }
-            updateFilteredTxtUi(it)
+            remoteFileTagViewModel.setFilter(it)
         }
     }
 
     private fun init() {
         modifiedStamp = getStamp()
 
-        val typeName =
-            if (type.isLocal()) {
-                getString(R.string.lbl_on_device)
-            } else {
-                getString(R.string.rdns_plus)
-            }
         b.lbBlocklistApplyBtn.text =
-            getString(R.string.ct_ip_details, getString(R.string.lbl_apply), typeName)
+            getString(R.string.ct_ip_details, getString(R.string.lbl_apply), getString(R.string.rdns_plus))
 
         io {
             val flags = getTagsFromStamp(modifiedStamp, type)
@@ -224,30 +187,7 @@ class RethinkBlocklistFragment :
         // update ui based on blocklist availability
         hasBlocklist()
 
-        // be default, select the simple blocklist view
-        selectToggleBtnUi(b.lbSimpleToggleBtn)
-        unselectToggleBtnUi(b.lbAdvToggleBtn)
-
         remakeFilterChipsUi()
-    }
-
-    private fun updateFilteredTxtUi(filter: Filters) {
-        if (filter.subGroups.isEmpty()) {
-            b.lbAdvancedFilterLabelTv.text =
-                htmlToSpannedText(
-                    getString(R.string.rt_filter_desc, filter.filterSelected.name.lowercase())
-                )
-        } else {
-            b.lbAdvancedFilterLabelTv.text =
-                htmlToSpannedText(
-                    getString(
-                        R.string.rt_filter_desc_subgroups,
-                        filter.filterSelected.name.lowercase(),
-                        "",
-                        filter.subGroups
-                    )
-                )
-        }
     }
 
     private fun hasBlocklist() {
@@ -269,20 +209,11 @@ class RethinkBlocklistFragment :
     }
 
     private fun hasBlocklists(): Boolean {
-        return if (type.isLocal()) {
-            hasLocalBlocklists(requireContext(), persistentState.localBlocklistTimestamp)
-        } else {
-            hasRemoteBlocklists(requireContext(), persistentState.remoteBlocklistTimestamp)
-        }
+        return hasRemoteBlocklists(requireContext(), persistentState.remoteBlocklistTimestamp)
     }
 
     private fun showDownloadUi() {
-        if (type.isLocal()) {
-            b.lbDownloadLayout.visibility = View.VISIBLE
-        } else {
-            b.lbDownloadProgressRemote.visibility = View.VISIBLE
-            downloadBlocklist(type)
-        }
+        b.lbDownloadProgressRemote.visibility = View.VISIBLE
     }
 
     private fun showConfigureUi() {
@@ -290,7 +221,6 @@ class RethinkBlocklistFragment :
     }
 
     private fun hideDownloadUi() {
-        b.lbDownloadLayout.visibility = View.GONE
         b.lbDownloadProgressRemote.visibility = View.GONE
     }
 
@@ -310,18 +240,6 @@ class RethinkBlocklistFragment :
     }
 
     private fun initClickListeners() {
-        b.lbDownloadBtn.setOnClickListener {
-            b.lbDownloadBtn.isEnabled = false
-            b.lbDownloadBtn.isClickable = false
-
-            downloadBlocklist(type)
-        }
-
-        b.lbCancelDownloadBtn.setOnClickListener {
-            cancelDownload()
-            requireActivity().finish()
-        }
-
         b.lbBlocklistApplyBtn.setOnClickListener {
             // update rethink stamp
             setStamp(modifiedStamp)
@@ -342,118 +260,17 @@ class RethinkBlocklistFragment :
             }
         }
 
-        b.lbListToggleGroup.addOnButtonCheckedListener(listViewToggleListener)
-
         b.lbAdvSearchFilterIcon.setOnClickListener { openFilterBottomSheet() }
 
         b.lbAdvSearchSv.setOnQueryTextListener(this)
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            // fixme: show dialog if the user selects/unselects from the list and try to close
-            // the fragment before saving
-
             if (!isStampChanged()) {
                 requireActivity().finish()
                 return@addCallback
             }
 
             showApplyChangesDialog()
-        }
-    }
-
-    private fun cancelDownload() {
-        // cancel the local blocklist download
-        appDownloadManager.cancelDownload(type = RethinkBlocklistManager.DownloadType.LOCAL)
-    }
-
-    private fun downloadBlocklist(type: RethinkBlocklistManager.RethinkBlocklistType) {
-        // Check if VPN is in lockdown mode and custom download manager is disabled
-        if (VpnController.isVpnLockdown() && !persistentState.useCustomDownloadManager) {
-            showLockdownDownloadDialog(type)
-            return
-        }
-
-        proceedWithBlocklistDownload(type)
-    }
-
-    private fun showLockdownDownloadDialog(type: RethinkBlocklistManager.RethinkBlocklistType) {
-        val builder = MaterialAlertDialogBuilder(requireContext(), R.style.App_Dialog_NoDim)
-        builder.setTitle(R.string.lockdown_download_enable_inapp)
-        builder.setMessage(R.string.lockdown_download_message)
-        builder.setCancelable(true)
-        builder.setPositiveButton(R.string.lockdown_download_enable_inapp) { _, _ ->
-            // Enable in-app downloader and proceed with download
-            persistentState.useCustomDownloadManager = true
-            downloadBlocklist(type)
-        }
-        builder.setNegativeButton(R.string.lbl_cancel) { dialog, _ ->
-            dialog.dismiss()
-            // Proceed with Android download manager (useCustomDownloadManager stays false)
-            proceedWithBlocklistDownload(type)
-        }
-        builder.create().show()
-    }
-
-    private fun proceedWithBlocklistDownload(type: RethinkBlocklistManager.RethinkBlocklistType) {
-        ui {
-            if (type.isLocal()) {
-                var status = AppDownloadManager.DownloadManagerStatus.NOT_STARTED
-                ioCtx {
-                    status =
-                        appDownloadManager.downloadLocalBlocklist(
-                            persistentState.localBlocklistTimestamp,
-                            isRedownload = false
-                        )
-                }
-                handleDownloadStatus(status)
-            } else { // remote blocklist
-                // default remote download will happen from rethink-dns list screen
-                // check RethinkListFragment.kt
-                // if it enters this block, download the blocklist regardless of the timestamp
-                ioCtx {
-                    appDownloadManager.downloadRemoteBlocklist(
-                        persistentState.remoteBlocklistTimestamp,
-                        isRedownload = true
-                    )
-                }
-                b.lbDownloadProgressRemote.visibility = View.GONE
-                hasBlocklist()
-            }
-        }
-    }
-
-    private fun handleDownloadStatus(status: AppDownloadManager.DownloadManagerStatus) {
-        when (status) {
-            AppDownloadManager.DownloadManagerStatus.IN_PROGRESS -> {
-                // no-op
-            }
-            AppDownloadManager.DownloadManagerStatus.STARTED -> {
-                // the job of download status stops after initiating the work manager observer
-                observeWorkManager()
-            }
-            AppDownloadManager.DownloadManagerStatus.NOT_STARTED -> {
-                // no-op
-            }
-            AppDownloadManager.DownloadManagerStatus.SUCCESS -> {
-                // no-op
-                // as the download initiated is tracked with this status
-                // download complete status will be from coroutine worker.
-                // the job of download status stops after initiating the work manager observer
-            }
-            AppDownloadManager.DownloadManagerStatus.FAILURE -> {
-                onDownloadFail()
-            }
-            AppDownloadManager.DownloadManagerStatus.NOT_REQUIRED -> {
-                // no-op, no need to update any ui in this screen
-            }
-            AppDownloadManager.DownloadManagerStatus.NOT_AVAILABLE -> {
-                // TODO: Prompt for app update
-                showToastUiCentered(
-                    requireContext(),
-                    "Download latest version to update the blocklists",
-                    Toast.LENGTH_SHORT
-                )
-            }
         }
     }
 
@@ -484,125 +301,45 @@ class RethinkBlocklistFragment :
 
         io {
             val blocklistCount = getTagsFromStamp(stamp, type).size
-            if (type.isLocal()) {
-                persistentState.localBlocklistStamp = stamp
-                persistentState.numberOfLocalBlocklists = blocklistCount
-                persistentState.blocklistEnabled = true
-                Logger.i(LOG_TAG_UI, "set stamp for local blocklist with $stamp, $blocklistCount")
-            } else {
-                // set stamp for remote blocklist
-                appConfig.updateRethinkEndpoint(
-                    Constants.RETHINK_DNS_PLUS,
-                    getRemoteUrl(stamp),
-                    blocklistCount
-                )
-                appConfig.enableRethinkDnsPlus()
-                Logger.i(LOG_TAG_UI, "set stamp for remote blocklist with $stamp, $blocklistCount")
-            }
+            persistentState.remoteBlocklistStamp = stamp
+            persistentState.numberOfRemoteBlocklists = blocklistCount
         }
-    }
-
-    private fun getRemoteUrl(stamp: String): String {
-        return if (remoteUrl.contains(MAX_ENDPOINT)) {
-            Constants.RETHINK_BASE_URL_MAX + stamp
-        } else {
-            Constants.RETHINK_BASE_URL_SKY + stamp
-        }
-    }
-
-    private val listViewToggleListener =
-        MaterialButtonToggleGroup.OnButtonCheckedListener { _, checkedId, isChecked ->
-            val mb: MaterialButton = b.lbListToggleGroup.findViewById(checkedId)
-            if (isChecked) {
-                selectToggleBtnUi(mb)
-                showList(mb.tag.toString())
-                return@OnButtonCheckedListener
-            }
-
-            unselectToggleBtnUi(mb)
-        }
-
-    private fun showList(id: String) {
-        // change the check based on the tag
-        when (BlocklistView.getTag(id)) {
-            BlocklistView.PACKS -> {
-                b.lbSimpleRecyclerPacks.visibility = View.VISIBLE
-                b.lbAdvContainer.visibility = View.INVISIBLE
-            }
-            BlocklistView.ADVANCED -> {
-                b.lbSimpleRecyclerPacks.visibility = View.GONE
-                b.lbAdvContainer.visibility = View.VISIBLE
-            }
-        }
-    }
-
-    private fun selectToggleBtnUi(mb: MaterialButton) {
-        mb.backgroundTintList =
-            ColorStateList.valueOf(fetchToggleBtnColors(requireContext(), R.color.accentGood))
-        mb.setTextColor(UIUtils.fetchColor(requireContext(), R.attr.homeScreenHeaderTextColor))
-    }
-
-    private fun unselectToggleBtnUi(mb: MaterialButton) {
-        mb.setTextColor(UIUtils.fetchColor(requireContext(), R.attr.primaryTextColor))
-        mb.backgroundTintList =
-            ColorStateList.valueOf(
-                fetchToggleBtnColors(requireContext(), R.color.defaultToggleBtnBg)
-            )
     }
 
     private fun setListAdapter() {
         io {
             processSelectedFileTags(getStamp())
             uiCtx {
-                if (type.isLocal()) {
-                    setLocalAdapter()
-                } else {
-                    setRemoteAdapter()
-                }
-                showList(b.lbSimpleToggleBtn.tag.toString())
+                // simple view only
             }
         }
     }
 
-    private fun setupRecyclerScrollListener(recycler: RecyclerView, viewType: BlocklistView) {
-        val scrollListener =
-            object : RecyclerView.OnScrollListener() {
+    private fun setupRecyclerScrollListener(recycler: RecyclerView) {
+          val scrollListener =
+              object : RecyclerView.OnScrollListener() {
 
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    super.onScrolled(recyclerView, dx, dy)
+                  override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                      super.onScrolled(recyclerView, dx, dy)
 
-                    if (recyclerView.getChildAt(0)?.tag == null) return
+                      if (recyclerView.getChildAt(0)?.tag == null) return
 
-                    val tag: String = recyclerView.getChildAt(0).tag as String
+                      val tag: String = recyclerView.getChildAt(0).tag as String
+                      b.recyclerScrollHeaderSimple.visibility = View.VISIBLE
+                      b.recyclerScrollHeaderSimple.text = tag
+                  }
 
-                    if (viewType.isSimple()) {
-                        b.recyclerScrollHeaderSimple.visibility = View.VISIBLE
-                        b.recyclerScrollHeaderSimple.text = tag
-                        b.recyclerScrollHeaderAdv.visibility = View.GONE
-                    } else {
-                        b.recyclerScrollHeaderAdv.visibility = View.VISIBLE
-                        b.recyclerScrollHeaderAdv.text = tag
-                        b.recyclerScrollHeaderSimple.visibility = View.GONE
-                    }
-                }
-
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    super.onScrollStateChanged(recyclerView, newState)
-                    if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                        b.recyclerScrollHeaderSimple.visibility = View.GONE
-                        b.recyclerScrollHeaderAdv.visibility = View.GONE
-                    }
-                }
-            }
-        recycler.addOnScrollListener(scrollListener)
-    }
-
+                  override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                      super.onScrollStateChanged(recyclerView, newState)
+                      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                          b.recyclerScrollHeaderSimple.visibility = View.GONE
+                      }
+                  }
+              }
+          recycler.addOnScrollListener(scrollListener)
+      }
     private fun setSimpleAdapter() {
-        if (type.isLocal()) {
-            setLocalSimpleViewAdapter()
-        } else {
-            setRemoteSimpleViewAdapter()
-        }
+        setRemoteSimpleViewAdapter()
     }
 
     private suspend fun processSelectedFileTags(stamp: String) {
@@ -613,33 +350,18 @@ class RethinkBlocklistFragment :
     private suspend fun updateSelectedFileTags(selectedTags: MutableSet<Int>) {
         // clear the residues if the selected tags are empty
         if (selectedTags.isEmpty()) {
-            if (type.isLocal()) {
-                RethinkBlocklistManager.clearTagsSelectionLocal()
-            } else {
-                RethinkBlocklistManager.clearTagsSelectionRemote()
-            }
+            RethinkBlocklistManager.clearTagsSelectionRemote()
             return
         }
 
-        if (type.isLocal()) {
-            RethinkBlocklistManager.clearTagsSelectionLocal()
-            RethinkBlocklistManager.updateFiletagsLocal(selectedTags, 1 /* isSelected: true */)
-            val list = RethinkBlocklistManager.getSelectedFileTagsLocal().toSet()
-            updateFileTagList(list)
-        } else {
-            RethinkBlocklistManager.clearTagsSelectionRemote()
-            RethinkBlocklistManager.updateFiletagsRemote(selectedTags, 1 /* isSelected: true */)
-            val list = RethinkBlocklistManager.getSelectedFileTagsRemote().toSet()
-            updateFileTagList(list)
-        }
+        RethinkBlocklistManager.clearTagsSelectionRemote()
+        RethinkBlocklistManager.updateFiletagsRemote(selectedTags, 1 /* isSelected: true */)
+        val list = RethinkBlocklistManager.getSelectedFileTagsRemote().toSet()
+        updateFileTagList(list)
     }
 
     private fun getStamp(): String {
-        return if (type.isLocal()) {
-            persistentState.localBlocklistStamp
-        } else {
-            getRemoteBlocklistStamp(remoteUrl)
-        }
+        return getRemoteBlocklistStamp(remoteUrl)
     }
 
     override fun onQueryTextSubmit(query: String): Boolean {
@@ -714,19 +436,6 @@ class RethinkBlocklistFragment :
         return "%$q%"
     }
 
-    private fun setLocalSimpleViewAdapter() {
-        localSimpleViewAdapter = LocalSimpleViewAdapter(requireContext())
-        val layoutManager = CustomLinearLayoutManager(requireContext())
-        b.lbSimpleRecyclerPacks.layoutManager = layoutManager
-
-        localBlocklistPacksMapViewModel.simpleTags.observe(viewLifecycleOwner) {
-            val l = it.filter { it1 -> !it1.pack.contains(DEAD_PACK) && it1.pack.isNotEmpty() }
-            localSimpleViewAdapter?.submitData(viewLifecycleOwner.lifecycle, l)
-        }
-        b.lbSimpleRecyclerPacks.adapter = localSimpleViewAdapter
-        setupRecyclerScrollListener(b.lbSimpleRecyclerPacks, BlocklistView.PACKS)
-    }
-
     private fun setRemoteSimpleViewAdapter() {
         remoteSimpleViewAdapter = RemoteSimpleViewAdapter(requireContext())
         val layoutManager = CustomLinearLayoutManager(requireContext())
@@ -737,7 +446,7 @@ class RethinkBlocklistFragment :
             remoteSimpleViewAdapter?.submitData(viewLifecycleOwner.lifecycle, r)
         }
         b.lbSimpleRecyclerPacks.adapter = remoteSimpleViewAdapter
-        setupRecyclerScrollListener(b.lbSimpleRecyclerPacks, BlocklistView.PACKS)
+        setupRecyclerScrollListener(b.lbSimpleRecyclerPacks)
     }
 
     private fun remakeFilterChipsUi() {
@@ -792,169 +501,7 @@ class RethinkBlocklistFragment :
     }
 
     private suspend fun getAllList(): List<FileTag> {
-        return if (type.isLocal()) {
-            localFileTagViewModel.allFileTags()
-        } else {
-            remoteFileTagViewModel.allFileTags()
-        }
-    }
-
-    private fun setRemoteAdapter() {
-        if (advanceRemoteViewAdapter != null) return
-
-        advanceRemoteViewAdapter = RemoteAdvancedViewAdapter(requireContext())
-        val layoutManager = CustomLinearLayoutManager(requireContext())
-        b.lbAdvancedRecycler.layoutManager = layoutManager
-
-        remoteFileTagViewModel.remoteFileTags.observe(viewLifecycleOwner) {
-            advanceRemoteViewAdapter!!.submitData(viewLifecycleOwner.lifecycle, it)
-        }
-        b.lbAdvancedRecycler.adapter = advanceRemoteViewAdapter
-        setupRecyclerScrollListener(b.lbAdvancedRecycler, BlocklistView.ADVANCED)
-
-        // implement sticky headers
-        // ref:
-        // https://stackoverflow.com/questions/32949971/how-can-i-make-sticky-headers-in-recyclerview-without-external-lib
-        /*b.lbAdvancedRecycler.addItemDecoration(HeaderItemDecoration(b.lbAdvancedRecycler) { itemPosition ->
-            itemPosition >= 0 && itemPosition < advanceRemoteListAdapter!!.itemCount
-        })*/
-    }
-
-    private fun setLocalAdapter() {
-        if (advanceLocalViewAdapter != null) return
-
-        advanceLocalViewAdapter = LocalAdvancedViewAdapter(requireContext())
-        val layoutManager = CustomLinearLayoutManager(requireContext())
-        b.lbAdvancedRecycler.layoutManager = layoutManager
-
-        localFileTagViewModel.localFiletags.observe(viewLifecycleOwner) {
-            advanceLocalViewAdapter!!.submitData(viewLifecycleOwner.lifecycle, it)
-        }
-        b.lbAdvancedRecycler.adapter = advanceLocalViewAdapter
-        setupRecyclerScrollListener(b.lbAdvancedRecycler, BlocklistView.ADVANCED)
-    }
-
-    private fun observeWorkManager() {
-        val workManager = WorkManager.getInstance(requireContext().applicationContext)
-
-        // observer for custom download manager worker
-        workManager.getWorkInfosByTagLiveData(CUSTOM_DOWNLOAD).observe(viewLifecycleOwner) {
-            workInfoList ->
-            val workInfo = workInfoList?.getOrNull(0) ?: return@observe
-            Logger.i(
-                Logger.LOG_TAG_DOWNLOAD,
-                "WorkManager state: ${workInfo.state} for $CUSTOM_DOWNLOAD"
-            )
-            if (
-                WorkInfo.State.ENQUEUED == workInfo.state ||
-                    WorkInfo.State.RUNNING == workInfo.state
-            ) {
-                onDownloadStart()
-            } else if (WorkInfo.State.SUCCEEDED == workInfo.state) {
-                onDownloadSuccess()
-                workManager.pruneWork()
-            } else if (
-                WorkInfo.State.CANCELLED == workInfo.state ||
-                    WorkInfo.State.FAILED == workInfo.state
-            ) {
-                onDownloadFail()
-                workManager.pruneWork()
-                workManager.cancelAllWorkByTag(CUSTOM_DOWNLOAD)
-            } else { // state == blocked
-                // no-op
-            }
-        }
-
-        // observer for Androids default download manager
-        workManager.getWorkInfosByTagLiveData(DOWNLOAD_TAG).observe(viewLifecycleOwner) {
-            workInfoList ->
-            val workInfo = workInfoList?.getOrNull(0) ?: return@observe
-            Logger.i(
-                Logger.LOG_TAG_DOWNLOAD,
-                "WorkManager state: ${workInfo.state} for $DOWNLOAD_TAG"
-            )
-            if (
-                WorkInfo.State.ENQUEUED == workInfo.state ||
-                    WorkInfo.State.RUNNING == workInfo.state
-            ) {
-                onDownloadStart()
-            } else if (
-                WorkInfo.State.CANCELLED == workInfo.state ||
-                    WorkInfo.State.FAILED == workInfo.state
-            ) {
-                onDownloadFail()
-                workManager.pruneWork()
-                workManager.cancelAllWorkByTag(DOWNLOAD_TAG)
-                workManager.cancelAllWorkByTag(FILE_TAG)
-            } else { // state == blocked, succeeded
-                // no-op
-            }
-        }
-
-        workManager.getWorkInfosByTagLiveData(FILE_TAG).observe(viewLifecycleOwner) { workInfoList
-            ->
-            if (workInfoList != null && workInfoList.isNotEmpty()) {
-                val workInfo = workInfoList[0]
-                if (workInfo.state == WorkInfo.State.SUCCEEDED) {
-                    Logger.i(
-                        Logger.LOG_TAG_DOWNLOAD,
-                        "AppDownloadManager Work Manager completed - $FILE_TAG"
-                    )
-                    onDownloadSuccess()
-                    workManager.pruneWork()
-                } else if (
-                    workInfo.state == WorkInfo.State.CANCELLED || workInfo.state == WorkInfo.State.FAILED
-                ) {
-                    onDownloadFail()
-                    workManager.pruneWork()
-                    workManager.cancelAllWorkByTag(FILE_TAG)
-                    Logger.i(
-                        Logger.LOG_TAG_DOWNLOAD,
-                        "AppDownloadManager Work Manager failed - $FILE_TAG"
-                    )
-                } else {
-                    Logger.i(
-                        Logger.LOG_TAG_DOWNLOAD,
-                        "AppDownloadManager Work Manager - $FILE_TAG, ${workInfo.state}"
-                    )
-                }
-            }
-        }
-    }
-
-    private fun onDownloadStart() {
-        // update ui for download start
-        showDownloadUi()
-        b.lbDownloadProgress.visibility = View.VISIBLE
-        b.lbDownloadBtn.text = getString(R.string.rt_download_start)
-        hideConfigureUi()
-    }
-
-    private fun onDownloadFail() {
-        // update ui for download fail
-        b.lbDownloadProgress.visibility = View.GONE
-        b.lbDownloadProgressRemote.visibility = View.GONE
-        b.lbDownloadBtn.visibility = View.VISIBLE
-        b.lbDownloadBtn.isEnabled = true
-        b.lbDownloadBtn.text = getString(R.string.rt_download)
-        showDownloadUi()
-        hideConfigureUi()
-    }
-
-    private fun onDownloadSuccess() {
-        // update ui for download success
-        b.lbDownloadProgress.visibility = View.GONE
-        b.lbDownloadProgressRemote.visibility = View.GONE
-        b.lbDownloadBtn.text = getString(R.string.rt_download)
-        hideDownloadUi()
-        // showConfigureUi()
-        hasBlocklist()
-        b.lbListToggleGroup.check(R.id.lb_simple_toggle_btn)
-        showToastUiCentered(
-            requireContext(),
-            getString(R.string.download_update_dialog_message_success),
-            Toast.LENGTH_SHORT
-        )
+        return remoteFileTagViewModel.allFileTags()
     }
 
     private suspend fun uiCtx(f: suspend () -> Unit) {

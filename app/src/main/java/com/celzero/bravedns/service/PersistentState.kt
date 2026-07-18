@@ -234,13 +234,7 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
     var androidDownloadManagerIds by
         stringPref("android_download_manager_ids").withDefault<String>("")
 
-    // local timestamp for which the update is available
-    var newestLocalBlocklistTimestamp by
-        longPref("local_blocklist_update_ts").withDefault<Long>(INIT_TIME_MS)
 
-    // remote timestamp for which the update is available
-    var newestRemoteBlocklistTimestamp by
-        longPref("remote_blocklist_update_ts").withDefault<Long>(INIT_TIME_MS)
 
     // auto-check for blocklist update periodically (once in a day)
     var periodicallyCheckBlocklistUpdate by

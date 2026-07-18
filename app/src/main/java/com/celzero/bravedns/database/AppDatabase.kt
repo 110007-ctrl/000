@@ -40,8 +40,6 @@ import com.celzero.bravedns.util.Constants
         CustomDomain::class,
         RethinkDnsEndpoint::class,
         RethinkRemoteFileTag::class,
-        RethinkLocalFileTag::class,
-        LocalBlocklistPacksMap::class,
         RemoteBlocklistPacksMap::class,
         WgConfigFiles::class,
         ProxyApplicationMapping::class,
@@ -1153,9 +1151,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun rethinkRemoteFileTagDao(): RethinkRemoteFileTagDao
 
-    abstract fun rethinkLocalFileTagDao(): RethinkLocalFileTagDao
 
-    abstract fun localBlocklistPacksMapDao(): LocalBlocklistPacksMapDao
 
     abstract fun remoteBlocklistPacksMapDao(): RemoteBlocklistPacksMapDao
 
@@ -1199,11 +1195,6 @@ abstract class AppDatabase : RoomDatabase() {
     fun rethinkEndpointRepository() = RethinkDnsEndpointRepository(rethinkEndpointDao())
 
     fun rethinkRemoteFileTagRepository() = RethinkRemoteFileTagRepository(rethinkRemoteFileTagDao())
-
-    fun rethinkLocalFileTagRepository() = RethinkLocalFileTagRepository(rethinkLocalFileTagDao())
-
-    fun localBlocklistPacksMapRepository() =
-        LocalBlocklistPacksMapRepository(localBlocklistPacksMapDao())
 
     fun remoteBlocklistPacksMapRepository() =
         RemoteBlocklistPacksMapRepository(remoteBlocklistPacksMapDao())

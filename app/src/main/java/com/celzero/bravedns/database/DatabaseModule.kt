@@ -34,10 +34,8 @@ object DatabaseModule {
         single { get<AppDatabase>().customDomainEndpointDAO() }
         single { get<AppDatabase>().customIpEndpointDao() }
         single { get<AppDatabase>().rethinkEndpointDao() }
-        single { get<AppDatabase>().rethinkLocalFileTagDao() }
         single { get<AppDatabase>().rethinkRemoteFileTagDao() }
         single { get<AppDatabase>().remoteBlocklistPacksMapDao() }
-        single { get<AppDatabase>().localBlocklistPacksMapDao() }
         single { get<AppDatabase>().wgConfigFilesDAO() }
         single { get<AppDatabase>().wgApplicationMappingDao() }
         single { get<AppDatabase>().tcpProxyEndpointDao() }
@@ -70,9 +68,7 @@ object DatabaseModule {
         single { get<AppDatabase>().customIpRepository() }
         single { get<AppDatabase>().rethinkEndpointRepository() }
         single { get<AppDatabase>().rethinkRemoteFileTagRepository() }
-        single { get<AppDatabase>().rethinkLocalFileTagRepository() }
         single { get<AppDatabase>().remoteBlocklistPacksMapRepository() }
-        single { get<AppDatabase>().localBlocklistPacksMapRepository() }
         single { get<AppDatabase>().wgConfigFilesRepository() }
         single { get<AppDatabase>().wgApplicationMappingRepository() }
         single { get<AppDatabase>().tcpProxyEndpointRepository() }
