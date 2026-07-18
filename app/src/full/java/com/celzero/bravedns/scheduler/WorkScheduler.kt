@@ -39,14 +39,12 @@ class WorkScheduler(val context: Context) {
         const val APP_EXIT_INFO_JOB_TAG = "ScheduledCollectAppExitInfoJob"
         const val PURGE_CONNECTION_LOGS_JOB_TAG = "ScheduledPurgeConnectionLogsJob"
         const val PURGE_CONSOLE_LOGS_JOB_TAG = "ScheduledPurgeConsoleLogsJob"
-        const val BLOCKLIST_UPDATE_CHECK_JOB_TAG = "ScheduledBlocklistUpdateCheckJob"
         const val DATA_USAGE_JOB_TAG = "ScheduledDataUsageJob"
         const val CONSOLE_LOG_SAVE_JOB_TAG = "ConsoleLogSaveJob"
 
         const val APP_EXIT_INFO_JOB_TIME_INTERVAL_DAYS: Long = 7
         const val PURGE_LOGS_TIME_INTERVAL_HOURS: Long = 4
         const val PURGE_CONSOLE_LOGS_TIME_INTERVAL_HOURS: Long = 3
-        const val BLOCKLIST_UPDATE_CHECK_INTERVAL_DAYS: Long = 3
         const val DATA_USAGE_TIME_INTERVAL_MINS: Long = 20
 
         fun isWorkRunning(context: Context, tag: String): Boolean {
@@ -180,27 +178,6 @@ class WorkScheduler(val context: Context) {
                 bugReportCollector
             )
             .enqueue()
-    }
-
-    // schedule blocklist update check (based on user settings)
-    fun scheduleBlocklistUpdateCheckJob() {
-        // if (isWorkScheduled(context.applicationContext, BLOCKLIST_UPDATE_CHECK_JOB_TAG)) return
-
-        Logger.i(LOG_TAG_SCHEDULER, "Scheduled blocklist update check")
-        val blocklistUpdateCheck =
-            PeriodicWorkRequest.Builder(
-                BlocklistUpdateCheckJob::class.java,
-                BLOCKLIST_UPDATE_CHECK_INTERVAL_DAYS,
-                TimeUnit.DAYS
-            )
-                .addTag(BLOCKLIST_UPDATE_CHECK_JOB_TAG)
-                .build()
-        WorkManager.getInstance(context.applicationContext)
-            .enqueueUniquePeriodicWork(
-                BLOCKLIST_UPDATE_CHECK_JOB_TAG,
-                ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-                blocklistUpdateCheck
-            )
     }
 
     fun scheduleDataUsageJob() {

@@ -18,7 +18,6 @@ package com.celzero.bravedns
 import android.content.ContentResolver
 import com.celzero.bravedns.data.DataModule
 import com.celzero.bravedns.database.DatabaseModule
-import com.celzero.bravedns.download.AppDownloadManager
 import com.celzero.bravedns.scheduler.ScheduleManager
 import com.celzero.bravedns.scheduler.WorkScheduler
 import com.celzero.bravedns.service.AppUpdater
@@ -38,9 +37,6 @@ private val updaterModule = module {
 private val updaterModules = listOf(updaterModule)
 
 
-private val appDownloadManagerModule = module {
-    single { AppDownloadManager(androidContext(), get()) }
-}
 
 private val workerModule = module { single { WorkScheduler(androidContext()) } }
 
@@ -64,6 +60,5 @@ val AppModules: List<Module> by lazy {
         addAll(updaterModules)
         add(schedulerModule)
         add(workerModule)
-        add(appDownloadManagerModule)
     }
 }

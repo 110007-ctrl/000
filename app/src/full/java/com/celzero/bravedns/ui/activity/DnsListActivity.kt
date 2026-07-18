@@ -112,7 +112,6 @@ class DnsListActivity : AppCompatActivity(R.layout.activity_other_dns_list) {
             )
         }
 
-        b.cardRethinkDns.setOnClickListener { invokeRethinkActivity() }
     }
 
     private fun invokeRethinkActivity() {
@@ -220,12 +219,6 @@ class DnsListActivity : AppCompatActivity(R.layout.activity_other_dns_list) {
                 b.cardOdoh.strokeWidth = 2
                 b.initialOdoh.setTextColor(textColor)
                 b.abbrOdoh.setTextColor(textColor)
-            }
-            AppConfig.DnsType.RETHINK_REMOTE -> {
-                b.cardRethinkDns.strokeColor = strokeColor
-                b.cardRethinkDns.strokeWidth = 2
-                b.initialRethinkDns.setTextColor(textColor)
-                b.abbrRethinkDns.setTextColor(textColor)
             }
             else -> {
                 // no-op
