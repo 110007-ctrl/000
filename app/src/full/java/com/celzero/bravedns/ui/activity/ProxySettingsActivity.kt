@@ -426,18 +426,23 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
         // Update switch state without triggering the listener
         b.settingsActivityWarpSwitch.setOnCheckedChangeListener(null)
         b.settingsActivityWarpSwitch.isChecked = isConnected
-        // Bug: on the very first enable, the ON/OFF slide animation didn't play and the
-        // switch appeared "stuck" instead of animating. Root cause: settingsActivityWarpSwitchRow
-        // starts as View.GONE (see fragment_proxy_configure.xml), and Android never gives a
-        // GONE view's compound-button drawable a real draw pass, so its thumb/track drawable
-        // has no valid "current" state to animate from. The first time the row flips
-        // GONE -> VISIBLE (right after registration) the switch's checked state was set while
-        // still un-drawn, so the next real toggle had nothing to animate away from and jumped
-        // straight to its end state instead of sliding. Forcing a drawable sync exactly at that
-        // transition gives the switch a well-defined starting frame, so subsequent toggles -
-        // including the very first tap - animate normally.
+        // Bug (original): on the very first enable, the ON/OFF slide animation didn't play.
+        // Root cause: settingsActivityWarpSwitchRow starts as View.GONE (fragment_proxy_configure.xml),
+        // so the switch's drawable never gets a real draw pass until the row first becomes
+        // VISIBLE. Forcing a drawable sync right at that GONE -> VISIBLE transition fixed it.
+        //
+        // Bug (regression this introduced): ProxySettingsActivity is a real Activity, so every
+        // time the user leaves and comes back, a brand-new instance is created and the switch
+        // row is GONE by default again - this branch then fires on every single re-entry, not
+        // just the true first-ever registration. Calling jumpDrawablesToCurrentState()
+        // synchronously, in the same frame isChecked was just set, could freeze the switch on a
+        // stale pre-change (OFF) drawable frame before that state change had actually been laid
+        // out/drawn - so it displayed OFF even though isChecked and the real WARP connection
+        // were both genuinely ON. Deferring the jump to the next frame (post{}), after the
+        // checked-state change and the row's own layout pass have settled, fixes that: it syncs
+        // to the state that's actually on screen instead of the one mid-transition.
         if (isRegistered && !wasSwitchRowVisible) {
-            b.settingsActivityWarpSwitch.jumpDrawablesToCurrentState()
+            b.settingsActivityWarpSwitch.post { b.settingsActivityWarpSwitch.jumpDrawablesToCurrentState() }
         }
         b.settingsActivityWarpSwitch.isEnabled = true
         b.settingsActivityWarpSwitch.setOnCheckedChangeListener { _, isChecked ->
