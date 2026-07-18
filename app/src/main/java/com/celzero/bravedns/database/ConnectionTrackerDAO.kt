@@ -241,22 +241,21 @@ interface ConnectionTrackerDAO {
         "SELECT COUNT(*) FROM ConnectionTracker WHERE isBlocked = 1 AND timeStamp >= :since"
     )
     fun getBlockedConnectionsCountLiveData(since: Long): LiveData<Int>
+
+    // Active connections: rows where the VPN has not yet received a summary event
+    // (message='', uploadBytes=0, downloadBytes=0, synack=0) — session still open.
+    @Query(
+        "select * from ConnectionTracker where message = '' and uploadBytes = 0 and downloadBytes = 0 and synack = 0 order by id desc LIMIT $MAX_LOGS"
+    )
+    fun getActiveConnections(): PagingSource<Int, ConnectionTracker>
+
+    @Query(
+        "select * from ConnectionTracker where message = '' and uploadBytes = 0 and downloadBytes = 0 and synack = 0 and (appName like :query or ipAddress like :query or dnsQuery like :query or flag like :query or proxyDetails like :query or connId like :query) order by id desc LIMIT $MAX_LOGS"
+    )
+    fun getActiveConnections(query: String): PagingSource<Int, ConnectionTracker>
 }
 
-      // Active Connections: connections whose summary has not been received yet
-      // (message='', uploadBytes=0, downloadBytes=0, synack=0) — i.e. still established.
-      @Query(
-          "select * from ConnectionTracker where message = '' and uploadBytes = 0 and downloadBytes = 0 and synack = 0 order by id desc LIMIT $MAX_LOGS"
-      )
-      fun getActiveConnections(): PagingSource<Int, ConnectionTracker>
-
-      @Query(
-          "select * from ConnectionTracker where message = '' and uploadBytes = 0 and downloadBytes = 0 and synack = 0 and (appName like :query or ipAddress like :query or dnsQuery like :query or flag like :query or proxyDetails like :query or connId like :query) order by id desc LIMIT $MAX_LOGS"
-      )
-      fun getActiveConnections(query: String): PagingSource<Int, ConnectionTracker>
-    }
-
-    data class BlockedAppResult(
+data class BlockedAppResult(
     val uid: Int,
     val lastBlocked: Long,
     val count: Int
