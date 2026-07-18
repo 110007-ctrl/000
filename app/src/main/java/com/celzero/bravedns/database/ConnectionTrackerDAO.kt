@@ -243,7 +243,20 @@ interface ConnectionTrackerDAO {
     fun getBlockedConnectionsCountLiveData(since: Long): LiveData<Int>
 }
 
-data class BlockedAppResult(
+      // Active Connections: connections whose summary has not been received yet
+      // (message='', uploadBytes=0, downloadBytes=0, synack=0) — i.e. still established.
+      @Query(
+          "select * from ConnectionTracker where message = '' and uploadBytes = 0 and downloadBytes = 0 and synack = 0 order by id desc LIMIT $MAX_LOGS"
+      )
+      fun getActiveConnections(): PagingSource<Int, ConnectionTracker>
+
+      @Query(
+          "select * from ConnectionTracker where message = '' and uploadBytes = 0 and downloadBytes = 0 and synack = 0 and (appName like :query or ipAddress like :query or dnsQuery like :query or flag like :query or proxyDetails like :query or connId like :query) order by id desc LIMIT $MAX_LOGS"
+      )
+      fun getActiveConnections(query: String): PagingSource<Int, ConnectionTracker>
+    }
+
+    data class BlockedAppResult(
     val uid: Int,
     val lastBlocked: Long,
     val count: Int
