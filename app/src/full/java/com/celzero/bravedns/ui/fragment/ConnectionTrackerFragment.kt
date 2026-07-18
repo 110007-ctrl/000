@@ -272,6 +272,9 @@ class ConnectionTrackerFragment :
             TopLevelFilter.BLOCKED -> {
                 showChildChipsUi()
             }
+            TopLevelFilter.ACTIVE -> {
+                hideChildChipsUi()
+            }
         }
     }
 
@@ -283,10 +286,13 @@ class ConnectionTrackerFragment :
             makeParentChip(TopLevelFilter.ALLOWED.id, getString(R.string.lbl_allowed), false)
         val blocked =
             makeParentChip(TopLevelFilter.BLOCKED.id, getString(R.string.lbl_blocked), false)
+        val active =
+            makeParentChip(TopLevelFilter.ACTIVE.id, getString(R.string.lbl_active), false)
 
         b.filterChipParentGroup.addView(all)
         b.filterChipParentGroup.addView(allowed)
         b.filterChipParentGroup.addView(blocked)
+        b.filterChipParentGroup.addView(active)
     }
 
     private fun makeParentChip(id: Int, label: String, checked: Boolean): Chip {
@@ -340,6 +346,14 @@ class ConnectionTrackerFragment :
                 viewModel.setFilter(filterQuery, filterCategories, filterType)
                 remakeChildFilterChipsUi(FirewallRuleset.getBlockedRules())
                 showChildChipsUi()
+            }
+            TopLevelFilter.ACTIVE.id -> {
+                // active/established connections aren't yet blocked or allowed by any firewall
+                // rule, so there's no rule-based child filter set to show for this chip.
+                filterCategories.clear()
+                filterType = TopLevelFilter.ACTIVE
+                viewModel.setFilter(filterQuery, filterCategories, filterType)
+                hideChildChipsUi()
             }
         }
     }

@@ -243,7 +243,10 @@ interface ConnectionTrackerDAO {
     fun getBlockedConnectionsCountLiveData(since: Long): LiveData<Int>
 
     // Active connections: rows where the VPN has not yet received a summary event
-    // (message='', uploadBytes=0, downloadBytes=0, synack=0) — session still open.
+    // (message='', uploadBytes=0, downloadBytes=0, synack=0) — session still open. This mirrors
+    // the predicate already used above by getConnIdByUidIpAddress() and
+    // closeConnections()/closeConnectionForUids() to identify still-open connections, kept
+    // consistent here rather than introducing a new definition.
     @Query(
         "select * from ConnectionTracker where message = '' and uploadBytes = 0 and downloadBytes = 0 and synack = 0 order by id desc LIMIT $MAX_LOGS"
     )

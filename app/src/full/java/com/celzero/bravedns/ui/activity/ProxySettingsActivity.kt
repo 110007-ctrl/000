@@ -38,6 +38,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.celzero.bravedns.R
@@ -413,12 +414,26 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
             if (isRegistered) View.GONE else View.VISIBLE
 
         // Switch row: only shown when registered
+        val wasSwitchRowVisible = b.settingsActivityWarpSwitchRow.isVisible
         b.settingsActivityWarpSwitchRow.visibility =
             if (isRegistered) View.VISIBLE else View.GONE
 
         // Update switch state without triggering the listener
         b.settingsActivityWarpSwitch.setOnCheckedChangeListener(null)
         b.settingsActivityWarpSwitch.isChecked = isConnected
+        // Bug: on the very first enable, the ON/OFF slide animation didn't play and the
+        // switch appeared "stuck" instead of animating. Root cause: settingsActivityWarpSwitchRow
+        // starts as View.GONE (see fragment_proxy_configure.xml), and Android never gives a
+        // GONE view's compound-button drawable a real draw pass, so its thumb/track drawable
+        // has no valid "current" state to animate from. The first time the row flips
+        // GONE -> VISIBLE (right after registration) the switch's checked state was set while
+        // still un-drawn, so the next real toggle had nothing to animate away from and jumped
+        // straight to its end state instead of sliding. Forcing a drawable sync exactly at that
+        // transition gives the switch a well-defined starting frame, so subsequent toggles -
+        // including the very first tap - animate normally.
+        if (isRegistered && !wasSwitchRowVisible) {
+            b.settingsActivityWarpSwitch.jumpDrawablesToCurrentState()
+        }
         b.settingsActivityWarpSwitch.isEnabled = true
         b.settingsActivityWarpSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -427,7 +442,11 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
                     showWarpRegistrationDialog()
                     return@setOnCheckedChangeListener
                 }
-                b.settingsActivityWarpSwitch.isEnabled = false
+                // Defer disabling the switch to the next frame instead of doing it inline in
+                // the listener. Disabling it synchronously here forces an immediate
+                // disabled-state redraw that cuts off the native checked-state slide animation
+                // mid-flight, which is the other half of the "animation doesn't play" symptom.
+                b.settingsActivityWarpSwitch.post { b.settingsActivityWarpSwitch.isEnabled = false }
                 val warpProxyName = getString(R.string.warp_tunnel_title)
                 isWarpStarting = true
                 io {

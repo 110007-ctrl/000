@@ -44,7 +44,8 @@ class ConnectionTrackerViewModel(private val connectionTrackerDAO: ConnectionTra
     enum class TopLevelFilter(val id: Int) {
         ALL(0),
         ALLOWED(1),
-        BLOCKED(2)
+        BLOCKED(2),
+        ACTIVE(3)
     }
 
     private val pagingConfig: PagingConfig
@@ -119,7 +120,19 @@ class ConnectionTrackerViewModel(private val connectionTrackerDAO: ConnectionTra
             TopLevelFilter.BLOCKED -> {
                 getBlockedNetworkLogs(input)
             }
+            TopLevelFilter.ACTIVE -> {
+                getActiveNetworkLogs(input)
+            }
         }
+    }
+
+    private fun getActiveNetworkLogs(input: String): LiveData<PagingData<ConnectionTracker>> {
+        return Pager(pagingConfig) {
+                if (input.isBlank()) connectionTrackerDAO.getActiveConnections()
+                else connectionTrackerDAO.getActiveConnections("%$input%")
+            }
+            .liveData
+            .cachedIn(viewModelScope)
     }
 
     private fun getBlockedNetworkLogs(input: String): LiveData<PagingData<ConnectionTracker>> {
