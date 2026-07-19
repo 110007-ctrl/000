@@ -301,8 +301,7 @@ class RethinkBlocklistFragment :
 
         io {
             val blocklistCount = getTagsFromStamp(stamp, type).size
-            persistentState.remoteBlocklistStamp = stamp
-            persistentState.numberOfRemoteBlocklists = blocklistCount
+            persistentState.setRemoteBlocklistCount(blocklistCount)
         }
     }
 

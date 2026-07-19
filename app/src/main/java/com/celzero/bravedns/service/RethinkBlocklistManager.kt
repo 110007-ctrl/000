@@ -218,7 +218,7 @@ object RethinkBlocklistManager : KoinComponent {
     }
 
     fun getStamp(): String {
-        return persistentState.remoteBlocklistStamp
+        return ""
     }
 
     suspend fun getStamp(fileValues: Set<Int>, type: RethinkBlocklistType): String {
