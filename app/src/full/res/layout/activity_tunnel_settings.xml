@@ -599,11 +599,13 @@
             android:text="@string/settings_proxy_header"
             android:textColor="?attr/accentGood"
             android:textSize="@dimen/extra_large_font_text_view"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -853,12 +855,14 @@
             android:text="@string/orbot_status_arg_2"
             android:textColor="?attr/accentGood"
             android:textSize="@dimen/extra_large_font_text_view"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="80dp">
+            android:layout_marginBottom="80dp"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
