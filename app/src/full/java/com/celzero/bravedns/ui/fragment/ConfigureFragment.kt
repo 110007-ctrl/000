@@ -25,7 +25,6 @@ import com.celzero.bravedns.R
 import com.celzero.bravedns.RethinkDnsApplication.Companion.DEBUG
 import com.celzero.bravedns.databinding.FragmentConfigureBinding
 import com.celzero.bravedns.ui.activity.AdvancedSettingActivity
-import com.celzero.bravedns.ui.activity.AntiCensorshipActivity
 import com.celzero.bravedns.ui.activity.AppListActivity
 import com.celzero.bravedns.ui.activity.DnsDetailActivity
 import com.celzero.bravedns.ui.activity.FirewallActivity
@@ -53,7 +52,6 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
         VPN,
         OTHERS,
         LOGS,
-        ANTI_CENSORSHIP,
         ADVANCED
     }
 
@@ -72,8 +70,6 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
         }
         b.fsNetworkTv.text = getString(R.string.lbl_network).replaceFirstChar(Char::titlecase)
         b.fsLogsTv.text = getString(R.string.lbl_logs).replaceFirstChar(Char::titlecase)
-        b.fsAntiCensorshipTv.text =
-            getString(R.string.anti_censorship_title).replaceFirstChar(Char::titlecase)
     }
 
     private fun setupClickListeners() {
@@ -112,11 +108,6 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
             startActivity(ScreenType.LOGS)
         }
 
-        b.fsAntiCensorshipCard.setOnClickListener {
-            // open developer options configuration
-            startActivity(ScreenType.ANTI_CENSORSHIP)
-        }
-
         b.fsAdvancedCard.setOnClickListener {
             // open developer options configuration
             startActivity(ScreenType.ADVANCED)
@@ -133,7 +124,6 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
                 ScreenType.VPN -> Intent(requireContext(), TunnelSettingsActivity::class.java)
                 ScreenType.OTHERS -> Intent(requireContext(), MiscSettingsActivity::class.java)
                 ScreenType.LOGS -> Intent(requireContext(), NetworkLogsActivity::class.java)
-                ScreenType.ANTI_CENSORSHIP -> Intent(requireContext(), AntiCensorshipActivity::class.java)
                 ScreenType.ADVANCED -> Intent(requireContext(), AdvancedSettingActivity::class.java)
             }
 
