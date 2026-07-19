@@ -1699,8 +1699,6 @@
     <string name="adv_set_dial_timeout_title" translatable="true">Idle timeout</string>
     <string name="adv_set_dial_timeout_desc" translatable="true">Close idle TCP and UDP sockets after this duration.</string>
 
-    <string name="adv_set_experimental_title" translatable="false">Experimental</string>
-    <string name="adv_set_experimental_desc" translatable="false">Experimental features in network engine.</string>
 
     <string name="select_wg_proxy_desc" translatable="false">Select WireGuard proxy</string>
 
@@ -1739,8 +1737,6 @@
     </string>
     <string name="adv_tasker_dialog_edit_hint" translatable="true">Enter package name (example: net.dinglisch.android.taskerm)</string>
 
-    <string name="set_auto_dial_title" translatable="false">Set Auto Dial</string>
-    <string name="set_auto_dial_desc" translatable="false">Use parallel dialing to connect to multiple servers at once.</string>
 
     <string name="download_ip_info_title" translatable="true">Show provider information</string>
     <string name="download_ip_info_desc" translatable="true">Fetches service provider details for websites from <i>rethinkdns.com</i>, powered by <i>%1$s</i></string>

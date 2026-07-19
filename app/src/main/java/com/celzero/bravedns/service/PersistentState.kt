@@ -69,16 +69,13 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
         const val ENDPOINT_INDEPENDENCE = "endpoint_independence"
         const val TCP_KEEP_ALIVE = "tcp_keep_alive"
         const val USE_SYSTEM_DNS_FOR_UNDELEGATED_DOMAINS = "use_system_dns_for_undelegated_domains"
-        const val NETWORK_ENGINE_EXPERIMENTAL = "network_engine_experimental"
         const val USE_RPN = "rpn_state"
         const val RPN_MODE = "rpn_mode"
         const val DIAL_TIMEOUT_SEC = "dial_timeout_sec"
-        const val AUTO_DIALS_PARALLEL = "auto_dials_parallel"
         const val STALL_ON_NO_NETWORK = "fail_open_on_no_network"
         const val TUN_NETWORK_POLICY = "tun_network_handling_policy"
         const val USE_MAX_MTU = "use_max_mtu"
         const val SET_VPN_BUILDER_TO_METERED = "set_vpn_builder_to_metered"
-        const val PANIC_RANDOM = "panic_random"
 
 
         // SE Proxy for Anti-Censorship
@@ -357,7 +354,6 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
     // subscribe product id for the current user, empty string if not subscribed
     var rpnProductId by stringPref("rpn_product_id").withDefault<String>("")
 
-    var nwEngExperimentalFeatures by booleanPref("network_engine_experimental").withDefault<Boolean>(false)
 
     var dialTimeoutSec by intPref("dial_timeout_sec").withDefault<Int>(0)
 
@@ -366,7 +362,6 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
 
     var showConfettiOnRPlus by booleanPref("show_confetti_on_rplus").withDefault<Boolean>(true)
 
-    var autoDialsParallel by booleanPref("auto_dials_parallel").withDefault<Boolean>(false)
 
     // user setting whether to download ip info for the given ip address
     var downloadIpInfo by booleanPref("download_ip_info").withDefault<Boolean>(Utilities.isPlayStoreFlavour())
@@ -435,8 +430,6 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
     // set vpn builder to metered/unmetered
     var setVpnBuilderToMetered by booleanPref("set_vpn_builder_to_metered").withDefault<Boolean>(false)
 
-    // debug settings, panic random
-    var panicRandom by booleanPref("panic_random").withDefault<Boolean>(false)
 
     // universal rule, block all non A & AAAA dns responses
     private var _blockOtherDnsRecordTypes by booleanPref("block_non_ip_dns_responses").withDefault<Boolean>(false)
