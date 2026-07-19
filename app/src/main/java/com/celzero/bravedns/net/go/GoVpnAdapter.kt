@@ -2203,7 +2203,7 @@ class GoVpnAdapter : KoinComponent {
             Settings.setDialerOpts(Settings.SplitNever, Settings.RetryNever, timeoutSec, tcpKeepAlive)
             Logger.i(
                 LOG_TAG_VPN,
-                "$TAG set dial strategy: $mode, retry: $retry, tcpKeepAlive: $tcpKeepAlive, timeout: $timeoutSec"
+                "$TAG set dial strategy: SplitNever/RetryNever, tcpKeepAlive: $tcpKeepAlive, timeout: $timeoutSec"
             )
             logEvent(
                 Severity.LOW,
@@ -2574,11 +2574,11 @@ class GoVpnAdapter : KoinComponent {
         }
         try {
             Settings.setAutoMode(Settings.AutoModeLocal)
-            Logger.i(LOG_TAG_VPN, "$TAG set auto mode: $mode")
+            Logger.i(LOG_TAG_VPN, "$TAG set auto mode: AutoModeLocal")
             logEvent(
                 Severity.LOW,
                 "Set auto mode",
-                "Set auto mode to $mode"
+                "Set auto mode to AutoModeLocal"
             )
         } catch (e: Exception) {
             Logger.e(LOG_TAG_VPN, "$TAG err set auto mode: ${e.message}", e)
