@@ -170,12 +170,8 @@ class GoVpnAdapter : KoinComponent {
         setDialStrategy()
         setTransparency()
         undelegatedDomains()
-        setExperimentalSettings()
-        setAutoDialsParallel()
         setAutoMode()
         registerSeProxyIfNeeded()
-        // added for testing, use if needed
-        if (DEBUG) panicAtRandom(persistentState.panicRandom) else panicAtRandom(false)
         Logger.v(LOG_TAG_VPN, "$TAG initResolverProxiesPcap done")
     }
 
@@ -2504,63 +2500,7 @@ class GoVpnAdapter : KoinComponent {
         }
     }
 
-    suspend fun setExperimentalSettings(value: Boolean = persistentState.nwEngExperimentalFeatures) {
-        if (!tunnel.isConnected) {
-            Logger.e(LOG_TAG_VPN, "$TAG no tunnel, skip set experimental settings")
-            logEvent(
-                Severity.CRITICAL,
-                "Set experimental settings failed",
-                "Failed to set experimental settings to $value: no tunnel"
-            )
-            return
-        }
-        try {
-            Intra.experimentalWireGuard(value)
-            // refresh proxies on experimental settings change (required for wireguard)
-            //refreshOrReAddProxies()
-            Logger.i(LOG_TAG_VPN, "$TAG set experimental settings: $value")
-            logEvent(
-                Severity.LOW,
-                "Set experimental settings",
-                "Set experimental settings to $value"
-            )
-        } catch (e: Exception) {
-            Logger.e(LOG_TAG_VPN, "$TAG err set experimental settings: ${e.message}", e)
-            logEvent(
-                Severity.HIGH,
-                "Set experimental settings failed",
-                "Failed to set experimental settings to $value: ${e.message}"
-            )
-        }
-    }
 
-    suspend fun setAutoDialsParallel(value: Boolean = persistentState.autoDialsParallel) {
-        if (!tunnel.isConnected) {
-            Logger.e(LOG_TAG_VPN, "$TAG no tunnel, skip set auto dial option")
-            logEvent(
-                Severity.CRITICAL,
-                "Set auto dials parallel failed",
-                "Failed to set auto dials parallel to $value: no tunnel"
-            )
-            return
-        }
-        try {
-            Settings.setAutoDialsParallel(value)
-            Logger.i(LOG_TAG_VPN, "$TAG set auto dial parallel as $value")
-            logEvent(
-                Severity.LOW,
-                "Set auto dials parallel",
-                "Set auto dials parallel to $value"
-            )
-        } catch (e: Exception) {
-            Logger.e(LOG_TAG_VPN, "$TAG err set auto dial: ${e.message}", e)
-            logEvent(
-                Severity.HIGH,
-                "Set auto dials parallel failed",
-                "Failed to set auto dials parallel to $value: ${e.message}"
-            )
-        }
-    }
 
     suspend fun setAutoMode() {
         if (!tunnel.isConnected) {
@@ -2808,19 +2748,6 @@ class GoVpnAdapter : KoinComponent {
         return tunnel
     }
 
-    suspend fun panicAtRandom(shouldPanic: Boolean = persistentState.panicRandom) {
-        if (!tunnel.isConnected) {
-            Logger.e(LOG_TAG_VPN, "$TAG no tunnel, skip panic at random")
-            return
-        }
-        try {
-            Intra.panicAtRandom(shouldPanic)
-            Logger.i(LOG_TAG_VPN, "$TAG panic at random: $shouldPanic")
-            logEvent(Severity.HIGH, "Panic at random set", "Panic at random: $shouldPanic")
-        } catch (e: Exception) {
-            Logger.e(LOG_TAG_VPN, "$TAG err panic at random: ${e.message}")
-        }
-    }
 
     suspend fun performFlightRecording() {
         if (!DEBUG) return

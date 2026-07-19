@@ -24,7 +24,6 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.celzero.bravedns.R
 import com.celzero.bravedns.RethinkDnsApplication.Companion.DEBUG
 import com.celzero.bravedns.databinding.FragmentConfigureBinding
-import com.celzero.bravedns.ui.activity.AdvancedSettingActivity
 import com.celzero.bravedns.ui.activity.AppListActivity
 import com.celzero.bravedns.ui.activity.DnsDetailActivity
 import com.celzero.bravedns.ui.activity.FirewallActivity
@@ -51,8 +50,7 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
         PROXY,
         VPN,
         OTHERS,
-        LOGS,
-        ADVANCED
+        LOGS
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -62,12 +60,6 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
     }
 
     private fun initView() {
-        if (DEBUG) {
-            b.fsAdvancedCard.visibility = View.VISIBLE
-            b.fsAdvancedTv.text = getString(R.string.lbl_advanced).replaceFirstChar(Char::titlecase)
-        } else {
-            b.fsAdvancedCard.visibility = View.GONE
-        }
         b.fsNetworkTv.text = getString(R.string.lbl_network).replaceFirstChar(Char::titlecase)
         b.fsLogsTv.text = getString(R.string.lbl_logs).replaceFirstChar(Char::titlecase)
     }
@@ -107,11 +99,6 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
             // open logs configuration
             startActivity(ScreenType.LOGS)
         }
-
-        b.fsAdvancedCard.setOnClickListener {
-            // open developer options configuration
-            startActivity(ScreenType.ADVANCED)
-        }
     }
 
     private fun startActivity(type: ScreenType) {
@@ -124,7 +111,6 @@ class ConfigureFragment : Fragment(R.layout.fragment_configure) {
                 ScreenType.VPN -> Intent(requireContext(), TunnelSettingsActivity::class.java)
                 ScreenType.OTHERS -> Intent(requireContext(), MiscSettingsActivity::class.java)
                 ScreenType.LOGS -> Intent(requireContext(), NetworkLogsActivity::class.java)
-                ScreenType.ADVANCED -> Intent(requireContext(), AdvancedSettingActivity::class.java)
             }
 
         if (type == ScreenType.OTHERS) {

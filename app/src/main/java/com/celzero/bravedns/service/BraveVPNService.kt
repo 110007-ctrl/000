@@ -2576,11 +2576,6 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
                     undelegatedDomains()
                 }
             }
-            PersistentState.NETWORK_ENGINE_EXPERIMENTAL -> {
-                io("networkEngineExperimental") {
-                    setExperimentalSettings(persistentState.nwEngExperimentalFeatures)
-                }
-            }
             PersistentState.USE_RPN -> {
                 io("rpnUpdated") {
                     //handleRpnProxies()
@@ -2594,11 +2589,6 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
             PersistentState.DIAL_TIMEOUT_SEC -> {
                 io("tunTimeout") {
                     setDialStrategy()
-                }
-            }
-            PersistentState.AUTO_DIALS_PARALLEL -> {
-                io("autoDialsParallel") {
-                    setAutoDialsParallel()
                 }
             }
             PersistentState.STALL_ON_NO_NETWORK -> {
@@ -2634,15 +2624,6 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
                     vpnRestartTrigger.value = reason
                 }
             }
-            PersistentState.PANIC_RANDOM -> {
-                io("panicRandom") {
-                    if (DEBUG) {
-                        vpnAdapter?.panicAtRandom(persistentState.panicRandom)
-                    } else {
-                        Logger.e(LOG_TAG_VPN, "panic random change ignored, not in debug mode")
-                    }
-                }
-            }
             PersistentState.AUTO_PROXY_ENABLED -> {
                 io("seProxyEnabled") {
                     if (persistentState.autoProxyEnabled) {
@@ -2671,10 +2652,6 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         }
     }
 
-    private suspend fun setExperimentalSettings(experimental: Boolean) {
-        Logger.i(LOG_TAG_VPN, "set experimental settings: $experimental")
-        vpnAdapter?.setExperimentalSettings(experimental)
-    }
 
     private suspend fun undelegatedDomains() {
         Logger.i(LOG_TAG_VPN, "use system dns for undelegated domains: ${persistentState.useSystemDnsForUndelegatedDomains}")
@@ -2690,10 +2667,6 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         vpnAdapter?.setAutoMode()
     }
 
-    private suspend fun setAutoDialsParallel() {
-        Logger.d(LOG_TAG_VPN, "set auto dials parallel: ${persistentState.autoDialsParallel}")
-        vpnAdapter?.setAutoDialsParallel()
-    }
 
     private suspend fun setTransparency() {
         Logger.d(LOG_TAG_VPN, "set endpoint independence: ${persistentState.endpointIndependence}")
