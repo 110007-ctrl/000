@@ -102,7 +102,6 @@ object RpnProxyManager : KoinComponent {
 
     enum class RpnTunMode(val id: Int) {
         NONE(Settings.AutoModeLocal),
-        ANTI_CENSORSHIP(Settings.AutoModeHybrid),
         HIDE_IP(Settings.AutoModeRemote);
 
         companion object {
@@ -111,7 +110,7 @@ object RpnProxyManager : KoinComponent {
             fun getTunModeForAuto(): Int {
                 return when (rpnMode()) {
                     RpnMode.NONE -> NONE.id
-                    RpnMode.ANTI_CENSORSHIP -> ANTI_CENSORSHIP.id
+                    RpnMode.ANTI_CENSORSHIP -> NONE.id
                     RpnMode.HIDE_IP -> HIDE_IP.id
                 }
             }
@@ -130,13 +129,12 @@ object RpnProxyManager : KoinComponent {
                 val mode = fromId(id)
                 return when (mode) {
                     NONE -> ""
-                    ANTI_CENSORSHIP -> getPreferredId()
+                    ANTI_CENSORSHIP -> ""
                     HIDE_IP -> getPreferredId()
                 }
             }
         }
 
-        fun isAntiCensorship() = this == ANTI_CENSORSHIP
 
         fun isHideIp() = this == HIDE_IP
 

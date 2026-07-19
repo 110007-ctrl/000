@@ -1119,26 +1119,8 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">WireGuard-Ports im Erweitert-Modus fixieren/unverändert lassen (keine Zufälligkeit).</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Endpunktunabhängige Zuordnung</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Wenn aktiviert, behalten UDP-Sockets eine feste Adresse und einen festen Port für alle Ziele bei.</string>
-    <string name="anti_censorship_title" translatable="true">Zensurfreiheit</string>
-    <string name="anti_censorship_desc" translatable="true">Wähle aus verschiedenen Anti-Zensur-Techniken.</string>
     <string name="tcp_keep_alive_title" translatable="true">Kürzere TCP Keep-Alive-Zeit</string>
     <string name="tcp_keep_alive_desc" translatable="true">Schließe TCP-Sockets ohne aktuelle Aktivität schnell.</string>
-    <string name="ac_title" translatable="true">Zensurvermeidung</string>
-    <string name="ac_desc" translatable="true">Anti-Zensur-Tools können Internetfreiheit gewähren, aber diese funktionieren möglicherweise nicht überall. Nur auf nicht-proxied Verbindungen versucht.</string>
-    <string name="ac_never_split_desc" translatable="true">Pakete nicht ändern.</string>
-    <string name="ac_split_auto_desc" translatable="true">Pakete nach Bedarf ändern.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tcp_desc" translatable="true">Alte TCP-Pakete.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">Alte TCP- oder TLS-Pakete.</string>
-    <string name="ac_desync" translatable="true">Desynchronisierung</string>
-    <string name="ac_desync_desc" translatable="true">Sende nach Bedarf Lockmittel-Pakete.</string>
-    <string name="ac_retry_options_title" translatable="true">Strategie</string>
-    <string name="ac_retry_options_desc" translatable="true">Lege fest, wie Wiederholungsversuche für zensierte Verbindungen funktionieren.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">Bei Fehlern keine Anti-Zensur-Techniken erneut versuchen.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Bei Bedarf Anti-Zensur-Techniken anwenden.</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Immer Anti-Zensur-Techniken anwenden.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Wähle eine Anti-Zensur-Option, um die Strategie auszuwählen.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Das Ausschließen von Apps erfordert einen Paketnamen.</string>
     <string name="hop_error_toast_msg_1" translatable="true">Kann nicht weiterleiten, bereits %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">WireGuard nicht für Relais verfügbar; bitte mehr hinzufügen.</string>

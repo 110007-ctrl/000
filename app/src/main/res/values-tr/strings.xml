@@ -1140,27 +1140,9 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">Gelişmiş modda WireGuard dinleme portlarını sabit tut (rastgeleleştirme yok).</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Uç nokta bağımsız eşleştirme</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Etkinleştirildiğinde, UDP soketleri tüm hedefler için sabit bir adres ve port korur.</string>
-    <string name="anti_censorship_title" translatable="true">Sansür karşıtı</string>
-    <string name="anti_censorship_desc" translatable="true">Çeşitli sansür karşıtı teknikler arasından seçim yapın.</string>
     <string name="tcp_keep_alive_title" translatable="true">Daha kısa TCP canlı tutma</string>
     <string name="tcp_keep_alive_desc" translatable="true">Son zamanlarda etkinliği olmayan TCP soketlerini hızla kapat.</string>
-    <string name="ac_title" translatable="true">sansür-karşıtı</string>
-    <string name="ac_desc" translatable="true">Sansür karşıtı araçlar internet özgürlüğü sağlayabilir, ancak bunlar her yerde çalışmayabilir. Yalnızca proxy kullanmayan bağlantılarda denenir.</string>
-    <string name="ac_never_split_desc" translatable="true">Paketleri değiştirme.</string>
-    <string name="ac_split_auto_desc" translatable="true">Gerektiğinde paketleri değiştir.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tcp_desc" translatable="true">TCP paketlerini değiştir.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">TCP veya TLS paketlerini değiştir.</string>
-    <string name="ac_desync" translatable="true">Desenkronizasyon</string>
-    <string name="ac_desync_desc" translatable="true">Gerektiğinde sahte paketler gönder.</string>
-    <string name="ac_retry_options_title" translatable="true">strateji</string>
-    <string name="ac_retry_options_desc" translatable="true">Sansürlenen bağlantılar için yeniden deneme işlevinin nasıl çalışacağını ayarla.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">Başarısızlık durumunda sansür karşıtı teknikleri asla yeniden deneme.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Gerektiğinde sansür karşıtı teknikleri uygula.</string>
     <string name="lbl_always" translatable="true">Her zaman</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Her zaman sansür karşıtı teknikleri uygula.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Strateji seçmek için herhangi bir sansür karşıtı seçenek belirleyin.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Uygulamaları hariç tutmak için paket adı gereklidir.</string>
     <string name="hop_error_toast_msg_1" translatable="true">Aktarım yapılamaz, zaten %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">Aktarım için WireGuard mevcut değil; lütfen daha fazla ekleyin.</string>

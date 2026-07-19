@@ -1038,7 +1038,6 @@
     <string name="lbl_fallback" translatable="true">Alternative</string>
     <string name="settings_biometric_dialog_option_0" translatable="true">Aucun</string>
     <string name="settings_biometric_dialog_option_1" translatable="true">Immédiatement</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
     <string name="lbl_always" translatable="true">Toujours</string>
     <string name="adv_set_dial_timeout_title" translatable="true">Délai d\'inactivité :</string>
     <string name="about_terms_of_service" translatable="true">Conditions d\'utilisation</string>
@@ -1092,25 +1091,8 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">Conserver les ports d\'écoute WireGuard fixes (pas d\'aléatoire) en mode avancé.</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Cartographie indépendante du point de terminaison</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Lorsqu\'ils sont activés, les sockets UDP conservent une adresse et un port fixes pour toutes les destinations.</string>
-    <string name="anti_censorship_title" translatable="true">Anti-censure</string>
-    <string name="anti_censorship_desc" translatable="true">Choisir parmi différentes techniques anti-censure.</string>
     <string name="tcp_keep_alive_title" translatable="true">Durée de vie TCP plus courte</string>
     <string name="tcp_keep_alive_desc" translatable="true">Fermer rapidement les sockets TCP sans activité récente.</string>
-    <string name="ac_title" translatable="true">anti-censure</string>
-    <string name="ac_desc" translatable="true">Les outils anti-censure peuvent garantir la liberté sur Internet, mais ils ne sont pas toujours efficaces. Testé uniquement sur des connexions non proxy.</string>
-    <string name="ac_never_split_desc" translatable="true">Ne pas modifier les paquets.</string>
-    <string name="ac_split_auto_desc" translatable="true">Modifier les paquets si nécessaire.</string>
-    <string name="ac_split_tcp_desc" translatable="true">Modifier les paquets TCP.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">Modifier les paquets TCP ou TLS.</string>
-    <string name="ac_desync" translatable="true">Désynchroniser</string>
-    <string name="ac_desync_desc" translatable="true">Envoyez des paquets leurres si nécessaire.</string>
-    <string name="ac_retry_options_title" translatable="true">stratégie</string>
-    <string name="ac_retry_options_desc" translatable="true">Définir le fonctionnement des nouvelles tentatives pour les connexions censurées.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">En cas d\'échec, ne jamais réessayer les techniques de contournement de la censure.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Appliquer des techniques anti-censure lorsque cela s\'avère nécessaire.</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Toujours appliquer des techniques anti-censure.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Choisir une option anti-censure pour définir votre stratégie.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Exclure des applications nécessite un nom de package.</string>
     <string name="hop_error_toast_msg_1" translatable="true">Impossible de relayer, déjà %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">Aucun WireGuard disponible pour le relais ; veuillez en ajouter.</string>

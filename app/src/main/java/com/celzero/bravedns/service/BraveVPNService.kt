@@ -2561,18 +2561,6 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
                     // no-op, no need to restart vpn as no proxy/dns proxy is enabled
                 }
             }
-
-            PersistentState.ANTI_CENSORSHIP_TYPE -> {
-                io("antiCensorship") {
-                    setDialStrategy()
-                }
-            }
-
-            PersistentState.RETRY_STRATEGY -> {
-                io("retryStrategy") {
-                    setDialStrategy()
-                }
-            }
             PersistentState.ENDPOINT_INDEPENDENCE -> {
                 io("endpointIndependence") {
                     setTransparency()
@@ -2696,7 +2684,7 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
     private suspend fun setDialStrategy() {
         Logger.d(
             LOG_TAG_VPN,
-            "set dial strategy: ${persistentState.dialStrategy}, retry: ${persistentState.retryStrategy}, tcpKeepAlive: ${persistentState.tcpKeepAlive}, timeout: ${persistentState.dialTimeoutSec}"
+            "set dial strategy called, tcpKeepAlive: ${persistentState.tcpKeepAlive}, timeout: ${persistentState.dialTimeoutSec}"
         )
         vpnAdapter?.setDialStrategy()
         vpnAdapter?.setAutoMode()

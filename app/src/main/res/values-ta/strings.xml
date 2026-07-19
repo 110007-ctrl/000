@@ -1073,26 +1073,9 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">மேம்பட்ட பயன்முறையில் வயர் கார்டைக் கேளுங்கள் துறைமுகங்களை சரி செய்யவும் (சீரற்றமயமாக்கல் இல்லை).</string>
     <string name="endpoint_independent_mapping_title" translatable="true">இறுதிப்புள்ளி-சுயாதீனமான மேப்பிங்</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">இயக்கப்பட்டால், யுடிபி சாக்கெட்டுகள் அனைத்து இடங்களுக்கும் ஒரு நிலையான முகவரி மற்றும் துறைமுகத்தை பராமரிக்கின்றன.</string>
-    <string name="anti_censorship_title" translatable="true">சென்சார்சிப் எதிர்ப்பு</string>
-    <string name="anti_censorship_desc" translatable="true">பல்வேறு சென்சார்சிப் நுட்பத்திலிருந்து தேர்வு செய்யவும்.</string>
     <string name="tcp_keep_alive_title" translatable="true">குறுகிய TCP உயிருடன் இருக்கும்</string>
     <string name="tcp_keep_alive_desc" translatable="true">அண்மைக் கால செயல்பாடு இல்லாத TCP சாக்கெட்டுகளை விரைவாக மூடு.</string>
-    <string name="ac_title" translatable="true">சென்சார்சிப் எதிர்ப்பு</string>
-    <string name="ac_desc" translatable="true">சென்சார்சிப் எதிர்ப்பு கருவிகள் இணைய சுதந்திரத்தை வழங்க முடியும், ஆனால் அவை எல்லா இடங்களிலும் வேலை செய்யாது. திட்டமிடப்படாத இணைப்புகளில் மட்டுமே முயற்சித்தது</string>
-    <string name="ac_never_split_desc" translatable="true">பாக்கெட்டுகளை மாற்ற வேண்டாம்.</string>
-    <string name="ac_split_auto_desc" translatable="true">தேவையான அளவு பாக்கெட்டுகளை மாற்றவும்.</string>
-    <string name="ac_split_tcp" translatable="true">டி.சி.பி.</string>
-    <string name="ac_split_tcp_desc" translatable="true">TCP பாக்கெட்டுகளை மாற்றவும்.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">TCP அல்லது TLS பாக்கெட்டுகளை மாற்றவும்.</string>
-    <string name="ac_desync_desc" translatable="true">தேவையான அளவு டிகோய் பாக்கெட்டுகளை அனுப்பவும்.</string>
-    <string name="ac_retry_options_title" translatable="true">மூலோபாயம்</string>
-    <string name="ac_retry_options_desc" translatable="true">தணிக்கை செய்யப்பட்ட இணைப்புகளுக்கு முயற்சிகள் எவ்வாறு செயல்படுகின்றன என்பதை அமைக்கவும்.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">மீண்டும் முயற்சிக்க வேண்டாம்.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">தேவைப்படும்போது சென்சார்சிப் எதிர்ப்பு நுட்பத்தைப் பயன்படுத்துங்கள்.</string>
     <string name="lbl_always" translatable="true">எப்போதும்</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">எப்போதும் சென்சார்சிப் எதிர்ப்பு நுட்பங்களைப் பயன்படுத்துங்கள்.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">மூலோபாயத்தைத் தேர்வுசெய்ய எந்த சென்சர்சிப் விருப்பத்தையும் தேர்ந்தெடுக்கவும்.</string>
     <string name="exclude_no_package_err_toast" translatable="true">பயன்பாடுகளைத் தவிர்த்து ஒரு தொகுப்பு பெயர் தேவை.</string>
     <string name="hop_error_toast_msg_1" translatable="true">ரிலே செய்ய முடியாது, ஏற்கனவே %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">ரிலேக்கு வயர் கார்ட் கிடைக்கவில்லை; மேலும் சேர்க்கவும்.</string>

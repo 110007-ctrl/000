@@ -1082,27 +1082,9 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">În modul Avansat, păstrează porturile de ascultare WireGuard fixe (nu la întâmplare).</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Mapare Endpoint-Independent</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Când este activat, socket-urile UDP mențin adresă și port fixe pentru toate destinațiile.</string>
-    <string name="anti_censorship_title" translatable="true">Anti-cenzură</string>
-    <string name="anti_censorship_desc" translatable="true">Alege din variatele tehnici anti-cenzură.</string>
     <string name="tcp_keep_alive_title" translatable="true">Scurtare durată TCP activ</string>
     <string name="tcp_keep_alive_desc" translatable="true">Închide rapid socket-urile TCP fără activitate recentă.</string>
-    <string name="ac_title" translatable="true">anti-cenzură</string>
-    <string name="ac_desc" translatable="true">Uneltele anti-cenzură pot garanta libertatea internetului, dar s-ar putea să nu funcționeze peste tot. Încercare efectuată doar pe conexiuni non-proxy.</string>
-    <string name="ac_never_split_desc" translatable="true">Nu modifica pachetele.</string>
-    <string name="ac_split_auto_desc" translatable="true">Modifică pachetele la nevoie.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tcp_desc" translatable="true">Modifică pachetele TCP.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">Modifică pachetele TCP sau TLS.</string>
-    <string name="ac_desync" translatable="true">Desincronizare</string>
-    <string name="ac_desync_desc" translatable="true">Trimite pachete false la nevoie.</string>
-    <string name="ac_retry_options_title" translatable="true">strategie</string>
-    <string name="ac_retry_options_desc" translatable="true">Setează cum se fac reîncercările în cazul conexiunilor cenzurate.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">În caz de nereușită, nu reîncerca cu tehnici anti-cenzură.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Încearcă tehnici anti-cenzură la nevoie.</string>
     <string name="lbl_always" translatable="true">Întotdeauna</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Aplică întotdeauna tehnici anti-cenzură.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Alege orice opțiune anti-cenzură pentru a adopta strategia.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Pentru a exclude aplicații, se cere un nume de pachet.</string>
     <string name="hop_error_toast_msg_1" translatable="true">Nu poate fi retransmis, este deja %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">WireGuard indisponibil pentru retransmitere; te rog adaugă.</string>

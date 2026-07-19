@@ -52,7 +52,6 @@ import com.celzero.bravedns.service.ProxyManager
 import com.celzero.bravedns.service.ProxyManager.ID_WG_BASE
 import com.celzero.bravedns.service.RethinkBlocklistManager
 import com.celzero.bravedns.service.WireguardManager
-import com.celzero.bravedns.ui.activity.AntiCensorshipActivity
 import com.celzero.bravedns.ui.activity.AppLockActivity
 import com.celzero.bravedns.util.Constants
 import com.celzero.bravedns.util.Constants.Companion.MAX_ENDPOINT
@@ -2192,8 +2191,6 @@ class GoVpnAdapter : KoinComponent {
     }
 
     suspend fun setDialStrategy(
-        mode: Int = persistentState.dialStrategy,
-        retry: Int = persistentState.retryStrategy,
         tcpKeepAlive: Boolean = persistentState.tcpKeepAlive,
         timeoutSec: Int = persistentState.dialTimeoutSec
     ) {
@@ -2203,7 +2200,7 @@ class GoVpnAdapter : KoinComponent {
             return
         }
         try {
-            Settings.setDialerOpts(mode, retry, timeoutSec, tcpKeepAlive)
+            Settings.setDialerOpts(Settings.SplitNever, Settings.RetryNever, timeoutSec, tcpKeepAlive)
             Logger.i(
                 LOG_TAG_VPN,
                 "$TAG set dial strategy: $mode, retry: $retry, tcpKeepAlive: $tcpKeepAlive, timeout: $timeoutSec"
@@ -2211,7 +2208,7 @@ class GoVpnAdapter : KoinComponent {
             logEvent(
                 Severity.LOW,
                 "dial strategy",
-                "set dial strategy to: mode=$mode, retry=$retry, tcpKeepAlive=$tcpKeepAlive, timeout=$timeoutSec"
+                "set dial strategy to: mode=SplitNever, retry=RetryNever, tcpKeepAlive=$tcpKeepAlive, timeout=$timeoutSec"
             )
         } catch (e: Exception) {
             Logger.e(LOG_TAG_VPN, "$TAG err set dial strategy: ${e.message}", e)
@@ -2431,16 +2428,7 @@ class GoVpnAdapter : KoinComponent {
         return try {
             val mode = RpnProxyManager.RpnTunMode.getTunModeForAuto()
             val prev = Settings.setAutoMode(mode)
-            if (!RpnProxyManager.rpnMode().isNone()) { // reset if mode is anti-censorship/hide ip
-                // set dial strategy to split_auto and retry to retry_after_split regardless
-                // of what is set in the settings
-                val dialMode = AntiCensorshipActivity.DialStrategies.SPLIT_AUTO.mode
-                val retryMode = AntiCensorshipActivity.RetryStrategies.RETRY_AFTER_SPLIT.mode
-                setDialStrategy(mode = dialMode, retry = retryMode)
-            } else {
-                // set dial strategy to default values
-                setDialStrategy()
-            }
+            setDialStrategy()
             Logger.i(LOG_TAG_PROXY, "$TAG set auto mode to: $mode, prev? $prev")
             true
         } catch (e: Exception) {
@@ -2585,27 +2573,7 @@ class GoVpnAdapter : KoinComponent {
             return
         }
         try {
-            val retryStrategy = AntiCensorshipActivity.RetryStrategies.fromInt(persistentState.retryStrategy)
-            if (retryStrategy == null) {
-                Logger.w(LOG_TAG_VPN, "$TAG invalid retry strategy: ${persistentState.retryStrategy}, no-op set auto mode")
-                return
-            }
-            val dialStrategy = AntiCensorshipActivity.DialStrategies.fromInt(persistentState.dialStrategy)
-
-            // proxy + none -> remote
-            // proxy + other retry -> hybrid
-            // all other dial strategies -> local
-            val mode = if (dialStrategy == AntiCensorshipActivity.DialStrategies.TCP_PROXY) {
-                if (retryStrategy == AntiCensorshipActivity.RetryStrategies.RETRY_NEVER) {
-                    Settings.AutoModeRemote
-                } else {
-                    Settings.AutoModeLocal
-                }
-            } else {
-                Settings.AutoModeLocal
-            }
-
-            Settings.setAutoMode(mode)
+            Settings.setAutoMode(Settings.AutoModeLocal)
             Logger.i(LOG_TAG_VPN, "$TAG set auto mode: $mode")
             logEvent(
                 Severity.LOW,

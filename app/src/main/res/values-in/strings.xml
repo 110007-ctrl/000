@@ -1128,21 +1128,11 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">Pertahankan port listen tetap WireGuard (tidak ada pengacakan) dalam mode Lanjutan.</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Pemetaan Titik Akhir-Independen</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Apabila diaktifkan, soket UDP akan mempertahankan alamat dan port yang tetap untuk semua tujuan.</string>
-    <string name="anti_censorship_title" translatable="true">Anti-sensor</string>
-    <string name="anti_censorship_desc" translatable="true">Pilih dari berbagai teknik Anti-sensor.</string>
     <string name="tcp_keep_alive_title" translatable="true">TCP yang lebih pendek tetap hidup</string>
     <string name="tcp_keep_alive_desc" translatable="true">Tutup soket TCP tanpa aktivitas terbaru dengan cepat.</string>
-    <string name="ac_title" translatable="true">anti-sensor</string>
     <string name="conn_track_clear_rule_logs_message" translatable="true">Tindakan ini hanya akan menghapus log jaringan untuk aturan firewall yang sedang dilihat. Operasi ini tidak dapat dibatalkan. Apakah Anda ingin melanjutkan?</string>
     <string name="univ_delete_domain_dialog_message" translatable="true">Menghapus aturan ini akan memungkinkan aplikasi apa pun untuk terhubung ke Domain yang saat ini diblokir.</string>
-    <string name="ac_desc" translatable="true">Anti-sensor dapat memberikan kebebasan internet, tetapi mungkin tidak berfungsi di semua tempat. Hanya berlaku pada koneksi tanpa proxy.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_retry_options_desc" translatable="true">Mengatur cara kerja percobaan ulang untuk koneksi yang disensor.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">Jika gagal, jangan ulangi teknik anti-sensor.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Terapkan teknik anti-sensor ketika diperlukan.</string>
     <string name="lbl_always" translatable="true">Selalu</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Selalu terapkan teknik anti-sensor.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Pilih opsi anti-sensor untuk memilih strategi.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Mengecualikan aplikasi memerlukan nama paket.</string>
     <string name="mode_change_error_proxy_enabled" translatable="true">Tidak dapat mengubah mode saat proxy sedang digunakan. Ketuk untuk <u>mengedit pengaturan proxy</u>.</string>
     <string name="blocklist_not_available_toast" translatable="true">Untuk memperbarui daftar blokir, unduh versi aplikasi terbaru.</string>
@@ -1176,14 +1166,6 @@
     <string name="conn_track_clear_rule_logs_title" translatable="true">Hapus log untuk aturan ini?</string>
     <string name="univ_delete_domain_dialog_title" translatable="true">Hapus semua Aturan Domain?</string>
     <string name="use_fallback_dns_to_bypass_desc" translatable="true">Bila diaktifkan, selalu menggunakan DNS cadangan untuk aplikasi, domain, dan IP yang dilewati.</string>
-    <string name="ac_never_split_desc" translatable="true">Jangan mengubah paket.</string>
-    <string name="ac_split_auto_desc" translatable="true">Ubah paket seperlunya.</string>
-    <string name="ac_split_tcp_desc" translatable="true">Mengubah paket TCP.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">Mengubah paket TCP atau TLS.</string>
-    <string name="ac_desync" translatable="true">Desinkronisasi</string>
-    <string name="ac_desync_desc" translatable="true">Kirim paket umpan bila perlu.</string>
-    <string name="ac_retry_options_title" translatable="true">strategi</string>
     <string name="vpn_policy_relaxed_desc" translatable="true">Bereaksi terhadap perubahan konektivitas yang menarik.</string>
     <string name="vpn_policy_relaxed" translatable="true">Santai</string>
     <string name="hop_error_toast_msg_2" translatable="true">Tidak ada WireGuard yang tersedia untuk relay; silakan tambahkan lebih banyak.</string>
