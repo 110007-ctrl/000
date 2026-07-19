@@ -967,6 +967,7 @@
                     android:id="@+id/settings_tasker_rl"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:visibility="gone"
                     android:background="?android:attr/selectableItemBackground"
                     android:paddingTop="15dp"
                     android:paddingBottom="15dp">

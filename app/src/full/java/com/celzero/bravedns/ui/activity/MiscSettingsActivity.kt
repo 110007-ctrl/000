@@ -30,12 +30,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.LocaleList
 import android.provider.Settings
-import android.text.InputType
-import android.view.Gravity
 import android.view.View
 import android.widget.CompoundButton
-import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
@@ -44,8 +40,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.widget.AppCompatEditText
-import androidx.appcompat.widget.AppCompatTextView
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -648,13 +642,6 @@ class MiscSettingsActivity : AppCompatActivity(R.layout.activity_misc_settings) 
             logEvent("Auto start on boot set to $b")
         }
 
-        b.settingsTaskerRl.setOnClickListener {
-            showAppTriggerPackageDialog(this , onPackageSet = { packageName ->
-                persistentState.appTriggerPackages = packageName
-                logEvent("App trigger package set to $packageName")
-            })
-        }
-
         b.settingsIpInfoRl.setOnClickListener {
             b.dvIpInfoSwitch.isChecked = !b.dvIpInfoSwitch.isChecked
         }
@@ -936,60 +923,6 @@ class MiscSettingsActivity : AppCompatActivity(R.layout.activity_misc_settings) 
           }
       }
 
-      fun showAppTriggerPackageDialog(context: Context, onPackageSet: (String) -> Unit) {
-          val editText = AppCompatEditText(context).apply {
-              hint = context.getString(R.string.adv_tasker_dialog_edit_hint)
-              inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
-              setHorizontallyScrolling(true)
-              if (persistentState.appTriggerPackages.isNotEmpty()) {
-                  setText(persistentState.appTriggerPackages)
-              }
-              setPadding(50, 40, 50, 40)
-              gravity = Gravity.TOP or Gravity.START
-              android.R.style.Widget_Material_EditText
-          }
-
-          val selectableTextView = AppCompatTextView(context).apply {
-              text = context.getString(R.string.adv_tasker_dialog_msg)
-              setTextIsSelectable(true)
-              setPadding(50, 40, 50, 0)
-              textSize = 16f
-          }
-
-          val instructionsTextView = AppCompatTextView(context).apply {
-              text = context.getString(R.string.adv_tasker_dialog_instructions)
-              setTextIsSelectable(true)
-              setPadding(50, 40, 50, 0)
-              textSize = 16f
-          }
-
-          // add a LinearLayout as the single child of the ScrollView, then add the text view and
-          // edit text to the LinearLayout.
-          val linearLayout = LinearLayout(context).apply {
-              orientation = LinearLayout.VERTICAL
-              addView(selectableTextView)
-              addView(editText)
-              addView(instructionsTextView)
-          }
-
-          val scrollView = ScrollView(context).apply {
-              setPadding(40, 10, 40, 0)
-              addView(linearLayout)
-          }
-
-          AlertDialog.Builder(context)
-              .setTitle(context.getString(R.string.adv_taster_title))
-              .setView(scrollView)
-              .setPositiveButton(context.getString(R.string.lbl_save)) { dialog, _ ->
-                  val pkgName = editText.text.toString().trim()
-                  if (pkgName.isNotEmpty()) {
-                      onPackageSet(pkgName)
-                  }
-                  dialog.dismiss()
-              }
-              .setNegativeButton(context.getString(R.string.lbl_cancel)) { dialog, _ -> dialog.cancel() }
-              .show()
-      }
 
 
     private fun Context.isDarkThemeOn(): Boolean {

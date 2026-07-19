@@ -23,8 +23,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.CompoundButton
-import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatRadioButton
@@ -44,10 +42,8 @@ import com.celzero.bravedns.service.VpnController
 import com.celzero.bravedns.ui.dialog.NetworkReachabilityDialog
 import com.celzero.bravedns.util.Constants
 import com.celzero.bravedns.util.InternetProtocol
-import com.celzero.bravedns.util.NewSettingsManager
 import com.celzero.bravedns.util.Themes
 import com.celzero.bravedns.util.UIUtils
-import com.celzero.bravedns.util.UIUtils.setBadgeDotVisible
 import com.celzero.bravedns.util.Utilities
 import com.celzero.bravedns.util.Utilities.isAtleastQ
 import com.celzero.bravedns.util.Utilities.showToastUiCentered
@@ -109,32 +105,11 @@ class TunnelSettingsActivity : AppCompatActivity(R.layout.activity_tunnel_settin
     override fun onResume() {
         super.onResume()
         handleLockdownModeIfNeeded()
-        showNewBadgeIfNeeded()
-    }
-
-    private fun showNewBadgeIfNeeded() {
-        val showBadge =
-            NewSettingsManager.shouldShowBadge(NewSettingsManager.WG_GLOBAL_LOCKDOWN_MODE_SETTING)
-        b.dvWgLockdownTxt.setBadgeDotVisible(this, showBadge)
     }
 
     private fun initView() {
-        b.settingsActivityWireguardText.text = getString(R.string.settings_proxy_header).lowercase()
-        val text = getString(R.string.two_argument, getString(R.string.orbot_status_arg_2).lowercase(), getString(R.string.lbl_ip))
-        b.settingsActivityTcpText.text = text.lowercase()
-        b.dvWgAllowIncomingTxt.text = getString(R.string.two_argument_space, getString(R.string.settings_allow_incoming_wg_packets), getString(R.string.lbl_experimental))
-        b.settingsUseMaxMtuHeading.text = getString(R.string.two_argument_space, getString(R.string.settings_jumbo_packets), getString(R.string.lbl_experimental))
-
-        b.settingsActivityAllowBypassProgress.visibility = View.GONE
-        displayAllowBypassUi()
-        // use multiple networks
-        b.settingsActivityAllNetworkSwitch.isChecked = persistentState.useMultipleNetworks
-        // route lan traffic
-        b.settingsActivityLanTrafficSwitch.isChecked = persistentState.privateIps
         // show ping ips
         b.settingsActivityPingIpsBtn.visibility = if (persistentState.connectivityChecks) View.VISIBLE else View.GONE
-        // exclude apps in proxy
-        b.settingsActivityExcludeProxyAppsSwitch.isChecked = !persistentState.excludeAppsInProxy
         // for protocol translation, enable only on DNS/DNS+Firewall mode
         if (appConfig.getBraveMode().isDnsActive()) {
             b.settingsActivityPtransSwitch.isChecked = persistentState.protocolTranslationType
@@ -143,229 +118,17 @@ class TunnelSettingsActivity : AppCompatActivity(R.layout.activity_tunnel_settin
             b.settingsActivityPtransSwitch.isChecked = false
         }
 
-        b.settingsActivityMobileMeteredSwitch.isChecked = persistentState.treatOnlyMobileNetworkAsMetered
-
-        b.settingsStallNoNwSwitch.isChecked = persistentState.stallOnNoNetwork
-
-        b.dvWgListenPortSwitch.isChecked = !persistentState.randomizeListenPort
-
-        b.dvWgLockdownSwitch.isChecked = persistentState.wgGlobalLockdown
-
-        // endpoint independent mapping (eim) / endpoint independent filtering (eif)
-        b.dvEimfSwitch.isChecked = persistentState.endpointIndependence
-        if (persistentState.endpointIndependence) {
-            b.dvWgAllowIncomingRl.visibility = View.VISIBLE
-            b.dvWgAllowIncomingTxt.text = getString(R.string.two_argument_space, getString(R.string.settings_allow_incoming_wg_packets), getString(R.string.lbl_experimental))
-            b.dvWgAllowIncomingSwitch.isChecked = persistentState.nwEngExperimentalFeatures
-        } else {
-            b.dvWgAllowIncomingRl.visibility = View.GONE
-        }
-
-        b.dvTcpKeepAliveSwitch.isChecked = persistentState.tcpKeepAlive
-        b.dvTimeoutSeekbar.progress = persistentState.dialTimeoutSec / SECONDS_PER_MINUTE
-
-        b.settingsUseMaxMtuSwitch.isChecked = persistentState.useMaxMtu
-
-        if (isAtleastQ()) {
-            b.settingsActivityTunnelMeteredRl.visibility = View.VISIBLE
-            b.settingsActivityTunnelMeteredSwitch.isChecked = persistentState.setVpnBuilderToMetered
-        } else {
-            b.settingsActivityTunnelMeteredRl.visibility = View.GONE
-        }
-
-        displayDialerTimeOutUi(persistentState.dialTimeoutSec)
         displayInternetProtocolUi()
-        displayRethinkInRethinkUi()
         showNwPolicyDescription(persistentState.vpnBuilderPolicy)
         
-        // If Fixed policy is selected, disable jumbo packets and IP version settings
+        // If Fixed policy is selected, disable IP version settings
         if (persistentState.vpnBuilderPolicy == POLICY_FIXED) {
-            b.settingsUseMaxMtuRl.isEnabled = false
-            b.settingsUseMaxMtuSwitch.isEnabled = false
             b.settingsActivityIpRl.isEnabled = false
         }
     }
 
 
-    private fun displayDialerTimeOutUi(progressSec: Int) {
-        val displayText = formatTimeShort(progressSec)
-        b.dvTimeoutValue.text = displayText
-    }
-
-    private fun formatTimeShort(totalSeconds: Int): String {
-        val hours = totalSeconds / SECONDS_PER_HOUR
-        val minutes = (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
-        val seconds = totalSeconds % SECONDS_PER_MINUTE
-
-        val parts = mutableListOf<String>()
-
-        if (hours > 0) parts.add("${hours}h")
-        if (minutes > 0) parts.add("${minutes}m")
-        if (seconds > 0) parts.add("${seconds}s")
-
-        return if (parts.isEmpty()) getString(R.string.lbl_disabled) else parts.joinToString(" ")
-    }
-
-    private fun updateDialerTimeOut(valueMin: Int) {
-        val inSec = valueMin * SECONDS_PER_MINUTE
-        persistentState.dialTimeoutSec = inSec
-        displayDialerTimeOutUi(inSec)
-    }
-
-    private fun displayAllowBypassUi() {
-        // allow apps part of the vpn to request networks outside of it, effectively letting it
-        // bypass the vpn itself
-        if (!Utilities.isPlayStoreFlavour()) {
-            b.settingsActivityAllowBypassRl.visibility = View.VISIBLE
-            b.settingsActivityAllowBypassDesc.visibility = View.VISIBLE
-            b.settingsActivityAllowBypassSwitch.visibility = View.VISIBLE
-            b.settingsActivityAllowBypassProgress.visibility = View.GONE
-
-            b.settingsActivityAllowBypassSwitch.isChecked = persistentState.allowBypass
-        } else {
-            b.settingsActivityAllowBypassRl.visibility = View.GONE
-            b.settingsActivityAllowBypassDesc.visibility = View.GONE
-            b.settingsActivityAllowBypassSwitch.visibility = View.GONE
-            b.settingsActivityAllowBypassProgress.visibility = View.GONE
-        }
-    }
-
     private fun setupClickListeners() {
-        b.settingsActivityAllNetworkRl.setOnClickListener {
-            b.settingsActivityAllNetworkSwitch.isChecked =
-                !b.settingsActivityAllNetworkSwitch.isChecked
-        }
-
-        b.settingsActivityAllNetworkSwitch.setOnCheckedChangeListener {
-            _: CompoundButton,
-            b: Boolean ->
-            persistentState.useMultipleNetworks = b
-            if (b) {
-                persistentState.enableStabilityDependentSettings(this)
-            }
-            if (!b && persistentState.routeRethinkInRethink) {
-                persistentState.routeRethinkInRethink = false
-                displayRethinkInRethinkUi()
-            }
-            logEvent(
-                "use all networks",
-                "Use all networks for VPN: $b"
-            )
-        }
-
-        b.settingsActivityExcludeProxyAppsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.excludeAppsInProxy = !isChecked
-            logEvent(
-                "exclude apps in proxy",
-                "Exclude apps in proxy: ${!isChecked}"
-            )
-        }
-
-        b.settingsActivityExcludeProxyAppsRl.setOnClickListener {
-            b.settingsActivityExcludeProxyAppsSwitch.isChecked = !b.settingsActivityExcludeProxyAppsSwitch.isChecked
-        }
-
-        b.settingsRInRRl.setOnClickListener {
-            b.settingsRInRSwitch.isChecked = !b.settingsRInRSwitch.isChecked
-        }
-
-        b.settingsRInRSwitch.setOnCheckedChangeListener { _: CompoundButton, isChecked: Boolean ->
-            // show a dialog to enable use multiple networks if the user selects yes
-            // rinr will not work without multiple networks
-            // reason: ConnectivityManager.activeNetwork returns VPN network when rinr is enabled
-            if (isChecked && !persistentState.useMultipleNetworks) {
-                val alertBuilder = MaterialAlertDialogBuilder(this, R.style.App_Dialog_NoDim)
-                alertBuilder.setTitle(getString(R.string.settings_rinr_dialog_title))
-                val msg =
-                    getString(
-                        R.string.settings_rinr_dialog_desc,
-                        getString(R.string.settings_network_all_networks)
-                    )
-                alertBuilder.setMessage(msg)
-                alertBuilder.setCancelable(false)
-                alertBuilder.setPositiveButton(getString(R.string.lbl_proceed)) { dialog, _ ->
-                    dialog.dismiss()
-                    b.settingsActivityAllNetworkSwitch.isChecked = true
-                    persistentState.useMultipleNetworks = true
-                    persistentState.routeRethinkInRethink = true
-                    displayRethinkInRethinkUi()
-                    logEvent(
-                        "use all networks",
-                        "Use all networks for VPN: true"
-                    )
-                }
-                alertBuilder.setNegativeButton(getString(R.string.lbl_cancel)) { dialog, _ ->
-                    dialog.dismiss()
-                    b.settingsRInRSwitch.isChecked = false
-                    logEvent(
-                        "rinr disabled",
-                        "Rethink in Rethink disabled by user"
-                    )
-                }
-                val dialog = alertBuilder.create()
-                dialog.show()
-            } else {
-                persistentState.routeRethinkInRethink = isChecked
-                if (isChecked) {
-                    persistentState.enableStabilityDependentSettings(this)
-                }
-                logEvent(
-                    "rinr toggled",
-                    "Rethink in Rethink set to: $isChecked"
-                )
-                displayRethinkInRethinkUi()
-            }
-        }
-
-        b.settingsActivityAllowBypassRl.setOnClickListener {
-            b.settingsActivityAllowBypassSwitch.isChecked =
-                !b.settingsActivityAllowBypassSwitch.isChecked
-        }
-
-        b.settingsActivityAllowBypassSwitch.setOnCheckedChangeListener {
-            _: CompoundButton,
-            checked: Boolean ->
-            if (Utilities.isPlayStoreFlavour()) return@setOnCheckedChangeListener
-
-            persistentState.allowBypass = checked
-            b.settingsActivityAllowBypassSwitch.isEnabled = false
-            b.settingsActivityAllowBypassSwitch.visibility = View.INVISIBLE
-            b.settingsActivityAllowBypassProgress.visibility = View.VISIBLE
-
-            Utilities.delay(TimeUnit.SECONDS.toMillis(1L), lifecycleScope) {
-                b.settingsActivityAllowBypassSwitch.isEnabled = true
-                b.settingsActivityAllowBypassProgress.visibility = View.GONE
-                b.settingsActivityAllowBypassSwitch.visibility = View.VISIBLE
-            }
-            logEvent(
-                "allow bypass",
-                "Allow bypass VPN: $checked"
-            )
-        }
-
-        b.settingsActivityLanTrafficRl.setOnClickListener {
-            b.settingsActivityLanTrafficSwitch.isChecked =
-                !b.settingsActivityLanTrafficSwitch.isChecked
-        }
-
-        b.settingsActivityLanTrafficSwitch.setOnCheckedChangeListener {
-            _: CompoundButton,
-            checked: Boolean ->
-            persistentState.privateIps = checked
-            if (checked) {
-                persistentState.enableStabilityDependentSettings(this)
-            }
-            b.settingsActivityLanTrafficSwitch.isEnabled = false
-
-            Utilities.delay(TimeUnit.SECONDS.toMillis(1L), lifecycleScope) {
-                b.settingsActivityLanTrafficSwitch.isEnabled = true
-            }
-            logEvent(
-                "route lan traffic",
-                "Route LAN traffic: $checked"
-            )
-        }
-
         b.settingsActivityVpnLockdownDesc.setOnClickListener { UIUtils.openVpnProfile(this) }
 
         b.settingsActivityIpRl.setOnClickListener {
@@ -419,143 +182,6 @@ class TunnelSettingsActivity : AppCompatActivity(R.layout.activity_tunnel_settin
             }
             showNwReachabilityCheckDialog()
         }
-
-        b.settingsActivityMobileMeteredSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.treatOnlyMobileNetworkAsMetered = isChecked
-            logEvent(
-                "treat mobile network as metered",
-                "Treat only mobile network as metered: $isChecked"
-            )
-        }
-
-        b.settingsActivityMobileMeteredRl.setOnClickListener {
-            b.settingsActivityMobileMeteredSwitch.isChecked =
-                !b.settingsActivityMobileMeteredSwitch.isChecked
-        }
-
-        b.settingsStallNoNwSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.stallOnNoNetwork = isChecked
-            logEvent(
-                "stall on no network",
-                "Stall on no network: $isChecked"
-            )
-        }
-
-        b.settingsStallNoNwRl.setOnClickListener {
-            b.settingsStallNoNwSwitch.isChecked = !b.settingsStallNoNwSwitch.isChecked
-        }
-
-        b.dvWgListenPortSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.randomizeListenPort = !isChecked
-            logEvent(
-                "wireguard listen port",
-                "WireGuard listen port randomize: ${!isChecked}"
-            )
-        }
-
-        b.dvWgListenPortRl.setOnClickListener {
-            b.dvWgListenPortSwitch.isChecked = !b.dvWgListenPortSwitch.isChecked
-        }
-
-        b.dvEimfSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.endpointIndependence = isChecked
-            if (isChecked) {
-                b.dvWgAllowIncomingRl.visibility = View.VISIBLE
-                b.dvWgAllowIncomingSwitch.isChecked = persistentState.nwEngExperimentalFeatures
-            } else {
-                b.dvWgAllowIncomingRl.visibility = View.GONE
-                persistentState.nwEngExperimentalFeatures = false
-            }
-            logEvent(
-                "endpoint independence",
-                "Endpoint independence (EIM/EIF) set to: $isChecked"
-            )
-        }
-
-        b.dvEimfRl.setOnClickListener { b.dvEimfSwitch.isChecked = !b.dvEimfSwitch.isChecked }
-
-        b.dvWgAllowIncomingSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.nwEngExperimentalFeatures = isChecked
-            logEvent(
-                "wg allow incoming packets",
-                "WireGuard allow incoming packets set to: $isChecked"
-            )
-        }
-
-        b.dvWgAllowIncomingRl.setOnClickListener {
-            b.dvWgAllowIncomingSwitch.isChecked = !b.dvWgAllowIncomingSwitch.isChecked
-        }
-
-        b.dvWgLockdownSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.wgGlobalLockdown = isChecked
-            logEvent(
-                "wg global lockdown",
-                "WireGuard global lockdown mode set to: $isChecked"
-            )
-        }
-
-        b.dvWgLockdownRl.setOnClickListener {
-            NewSettingsManager.markSettingSeen(NewSettingsManager.WG_GLOBAL_LOCKDOWN_MODE_SETTING)
-            b.dvWgLockdownSwitch.isChecked = !b.dvWgLockdownSwitch.isChecked
-        }
-
-        b.dvTcpKeepAliveSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.tcpKeepAlive = isChecked
-            logEvent(
-                "tcp keep alive",
-                "TCP keep alive set to: $isChecked"
-            )
-        }
-
-        b.dvTcpKeepAliveRl.setOnClickListener {
-            b.dvTcpKeepAliveSwitch.isChecked = !b.dvTcpKeepAliveSwitch.isChecked
-        }
-
-        b.settingsUseMaxMtuRl.setOnClickListener {
-            b.settingsUseMaxMtuSwitch.isChecked = !b.settingsUseMaxMtuSwitch.isChecked
-        }
-
-        b.settingsUseMaxMtuSwitch.setOnCheckedChangeListener { _, isChecked ->
-            persistentState.useMaxMtu = isChecked
-            logEvent(
-                "use jumbo packets",
-                "Use jumbo packets set to: $isChecked"
-            )
-        }
-
-        b.settingsActivityTunnelMeteredRl.setOnClickListener {
-            if (!isAtleastQ()) return@setOnClickListener
-            b.settingsActivityTunnelMeteredSwitch.isChecked = !b.settingsActivityTunnelMeteredSwitch.isChecked
-        }
-
-        b.settingsActivityTunnelMeteredSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (!isAtleastQ()) return@setOnCheckedChangeListener
-            persistentState.setVpnBuilderToMetered = isChecked
-            logEvent(
-                "set vpn metered",
-                "Set VPN builder to metered: $isChecked"
-            )
-        }
-
-        b.dvTimeoutSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                updateDialerTimeOut(progress)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                // No action needed on start tracking
-                // This can be used to show a toast or a message if needed
-                // For now, we will just log the start of tracking
-                Logger.v(LOG_TAG_UI, "Dialer timeout seekbar tracking started")
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                // When the user stops dragging the seekbar, update the dialer timeout
-                seekBar?.progress?.let { progress ->
-                    updateDialerTimeOut(progress)
-                }
-            }
-        })
 
         // Custom LAN IPs for VPN
         b.settingsCustomLanIpHeading.text = getString(R.string.custom_lan_ip_title)
@@ -669,24 +295,11 @@ class TunnelSettingsActivity : AppCompatActivity(R.layout.activity_tunnel_settin
 
         // If Fixed policy is selected (index 3), enable jumbo packets and set IPv4 & IPv6
         if (which == POLICY_FIXED) {
-            // Enable jumbo packets
-            persistentState.useMaxMtu = true
-            b.settingsUseMaxMtuSwitch.isChecked = true
-
             // Set IP version to IPv4 & IPv6 (ALWAYSv46)
             persistentState.internetProtocolType = InternetProtocol.ALWAYSv46.id
-
-            // Disable both settings (jumbo packets and IP version)
-            b.settingsUseMaxMtuRl.isEnabled = false
-            b.settingsUseMaxMtuSwitch.isEnabled = false
             b.settingsActivityIpRl.isEnabled = false
-
-            // Update UI
             displayInternetProtocolUi()
         } else {
-            // Enable both settings for other policies
-            b.settingsUseMaxMtuRl.isEnabled = true
-            b.settingsUseMaxMtuSwitch.isEnabled = true
             b.settingsActivityIpRl.isEnabled = true
         }
         logEvent(
@@ -772,29 +385,6 @@ class TunnelSettingsActivity : AppCompatActivity(R.layout.activity_tunnel_settin
                 b.settingsActivityPingIpsBtn.visibility = View.GONE
             }
         }
-    }
-
-    private fun displayRethinkInRethinkUi() {
-        b.settingsRInRSwitch.isChecked = persistentState.routeRethinkInRethink
-        if (persistentState.routeRethinkInRethink) {
-            b.genRInRDesc.text = getString(R.string.settings_rinr_desc_enabled)
-            disableBandwidthBoosterUi()
-        } else {
-            b.genRInRDesc.text = getString(R.string.settings_rinr_desc_disabled)
-            enableBandwidthBoosterUi()
-        }
-    }
-
-    private fun disableBandwidthBoosterUi() {
-        b.settingsUseMaxMtuRl.alpha = ALPHA_DISABLED
-        b.settingsUseMaxMtuSwitch.isEnabled = false
-        b.settingsUseMaxMtuRl.isEnabled = false
-    }
-
-    private fun enableBandwidthBoosterUi() {
-        b.settingsUseMaxMtuRl.alpha = ALPHA_ENABLED
-        b.settingsUseMaxMtuSwitch.isEnabled = true
-        b.settingsUseMaxMtuRl.isEnabled = true
     }
 
     private fun showIpDialog() {
@@ -914,18 +504,9 @@ class TunnelSettingsActivity : AppCompatActivity(R.layout.activity_tunnel_settin
         val isLockdown = VpnController.isVpnLockdown()
         if (isLockdown) {
             b.settingsActivityVpnLockdownDesc.visibility = View.VISIBLE
-            b.settingsActivityAllowBypassRl.alpha = ALPHA_DISABLED
-            b.settingsActivityExcludeProxyAppsRl.alpha = ALPHA_DISABLED
         } else {
             b.settingsActivityVpnLockdownDesc.visibility = View.GONE
-            b.settingsActivityAllowBypassRl.alpha = ALPHA_ENABLED
-            b.settingsActivityExcludeProxyAppsRl.alpha = ALPHA_ENABLED
         }
-        b.settingsActivityAllowBypassSwitch.isEnabled = !isLockdown
-        b.settingsActivityAllowBypassRl.isEnabled = !isLockdown
-        b.settingsActivityLanTrafficRl.isEnabled = !isLockdown
-        b.settingsActivityExcludeProxyAppsSwitch.isEnabled = !isLockdown
-        b.settingsActivityExcludeProxyAppsRl.isEnabled = !isLockdown
     }
 
     private fun logEvent(msg: String, details: String) {

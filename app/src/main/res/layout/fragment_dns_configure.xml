@@ -203,11 +203,13 @@
             android:text="@string/dc_filtering_heading"
             android:textColor="?attr/accentGood"
             android:textSize="@dimen/extra_large_font_text_view"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
