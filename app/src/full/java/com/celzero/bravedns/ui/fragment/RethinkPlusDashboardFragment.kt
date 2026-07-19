@@ -153,20 +153,12 @@ class RethinkPlusDashboardFragment : Fragment(R.layout.activity_rethink_plus_das
     private fun handleRpnMode() {
         val mode = RpnProxyManager.rpnMode()
         when (mode) {
-            RpnProxyManager.RpnMode.ANTI_CENSORSHIP -> {
-                b.rsAntiCensorshipRadio.isChecked = true
-                b.rsHideIpRadio.isChecked = false
-                b.rsOffRadio.isChecked = false
-            }
-
             RpnProxyManager.RpnMode.HIDE_IP -> {
-                b.rsAntiCensorshipRadio.isChecked = false
                 b.rsHideIpRadio.isChecked = true
                 b.rsOffRadio.isChecked = false
             }
 
             RpnProxyManager.RpnMode.NONE -> {
-                b.rsAntiCensorshipRadio.isChecked = false
                 b.rsHideIpRadio.isChecked = false
                 b.rsOffRadio.isChecked = true
             }
@@ -615,18 +607,6 @@ class RethinkPlusDashboardFragment : Fragment(R.layout.activity_rethink_plus_das
             handleRPlusOff(checked)
         }
 
-        b.rsAntiCensorshipRl.setOnClickListener {
-            val checked = b.rsAntiCensorshipRadio.isChecked
-            if (!checked) {
-                b.rsAntiCensorshipRadio.isChecked = true
-            }
-            handleAntiCensorshipMode(checked)
-        }
-
-        b.rsAntiCensorshipRadio.setOnCheckedChangeListener { _: CompoundButton, checked: Boolean ->
-            handleAntiCensorshipMode(checked)
-        }
-
         b.rsHideIpRl.setOnClickListener {
             val checked = b.rsHideIpRadio.isChecked
             if (!checked) {
@@ -661,22 +641,9 @@ class RethinkPlusDashboardFragment : Fragment(R.layout.activity_rethink_plus_das
         }
     }
 
-    private fun handleAntiCensorshipMode(checked: Boolean) {
-        Logger.v(LOG_TAG_UI, "$TAG Anti-censorship mode selected? $checked")
-        if (!checked) return
-
-        b.rsHideIpRadio.isChecked = false
-        b.rsOffRadio.isChecked = false
-        RpnProxyManager.setRpnMode(RpnProxyManager.RpnMode.ANTI_CENSORSHIP)
-        reinitiateProxiesUi()
-        Logger.i(LOG_TAG_UI, "$TAG Anti-censorship selected, mode: ${RpnProxyManager.rpnMode()}, state: ${persistentState.rpnState}")
-    }
-
     private fun handleHideIpMode(checked: Boolean) {
         Logger.v(LOG_TAG_UI, "$TAG Hide IP mode selected? $checked")
         if (!checked) return
-
-        b.rsAntiCensorshipRadio.isChecked = false
         b.rsOffRadio.isChecked = false
         RpnProxyManager.setRpnMode(RpnProxyManager.RpnMode.HIDE_IP)
         reinitiateProxiesUi()
@@ -688,7 +655,6 @@ class RethinkPlusDashboardFragment : Fragment(R.layout.activity_rethink_plus_das
         if (!checked) return
 
         b.rsHideIpRadio.isChecked = false
-        b.rsAntiCensorshipRadio.isChecked = false
         RpnProxyManager.setRpnMode(RpnProxyManager.RpnMode.NONE)
         reinitiateProxiesUi()
         Logger.i(LOG_TAG_UI, "$TAG off mode selected, mode:  ${RpnProxyManager.rpnMode()}, state: ${persistentState.rpnState}")

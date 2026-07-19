@@ -1069,16 +1069,6 @@
     <string name="lbl_manual" translatable="true">Kézikönyv</string>
     <string name="lbl_fallback" translatable="true">Tartalék</string>
     <string name="settings_biometric_dialog_option_0" translatable="true">Egyik sem</string>
-    <string name="ac_title" translatable="true">Cenzúraellenes mód</string>
-    <string name="ac_desc" translatable="true">A cenzúra megkerülésére szolgáló eszközök szabadságot nyújthatnak az interneten, de nem minden hálózati környezetben működnek. Csak olyan kapcsolatokon használhatók, amelyek nem proxy mögött futnak.</string>
-    <string name="ac_never_split_desc" translatable="true">A hálózati csomagok változatlanul maradnak.</string>
-    <string name="ac_split_auto_desc" translatable="true">Csomagmódosítás engedélyezve, ha szükséges.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tcp_desc" translatable="true">TCP csomagok módosítása.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">TCP- vagy TLS-csomagok módosítása.</string>
-    <string name="ac_desync" translatable="true">Szinkronhiány</string>
-    <string name="ac_desync_desc" translatable="true">Álcázó csomagok továbbítása, ha indokolt.</string>
     <string name="firewall_rule_private_dns_desc" translatable="true"><![CDATA[Ez a kapcsolat egy <i>Privát DNS</i> kiszolgálót keres, amely nem létezik.]]></string>
     <string name="firewall_rule_bypass_proxy_desc" translatable="true"><![CDATA[Ez a kapcsolat engedélyezve lett, mert a <i>forrásalkalmazás</i> be van állítva úgy, hogy <i>megkerülje a proxy</i> szabályokat.<br/><br/> A módosításhoz lépjen a <i>Alkalmazásspecifikus tűzfal</i> képernyőre.]]></string>
     <string name="firewall_rule_paused_app_desc" translatable="true"><![CDATA[Ez a kapcsolat engedélyezve lett, mert az <i>alkalmazás</i> <i>szüneteltetett</i> állapotban van.]]></string>
@@ -1091,16 +1081,8 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">Haladó módban a WireGuard figyelő portjai rögzítve maradnak (nincs véletlenszerűsítés).</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Végpontfüggetlen leképezés</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Ha engedélyezve van, az UDP-aljzatok minden célállomás esetén rögzített címet és portot használnak.</string>
-    <string name="anti_censorship_title" translatable="true">Cenzúraellenesség</string>
-    <string name="anti_censorship_desc" translatable="true">Válasszon a különféle cenzúraellenes technikák közül.</string>
     <string name="tcp_keep_alive_title" translatable="true">Rövidebb TCP-életben tartás</string>
     <string name="tcp_keep_alive_desc" translatable="true">TCP-aljzatok gyors bezárása, ha nincs friss aktivitás.</string>
-    <string name="ac_retry_options_title" translatable="true">stratégia</string>
-    <string name="ac_retry_options_desc" translatable="true">Állítsa be, hogyan működjenek az újrapróbálkozások a cenzúrázott kapcsolatok esetén.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">Sikertelenség esetén soha ne próbálkozz újra az anticenzúra technikákkal.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Alkalmazza az anticenzúra technikákat, amikor szükséges.</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Mindig alkalmazza az anticenzúra technikákat.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Válassz bármelyik anticenzúra opciót a stratégia kiválasztásához.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Az alkalmazások kizárásához csomagnév megadása szükséges.</string>
     <string name="hop_error_toast_msg_1" translatable="true">Nem lehet továbbítani, már %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">Nincs elérhető WireGuard az átirányításhoz; kérlek, adj hozzá többet.</string>

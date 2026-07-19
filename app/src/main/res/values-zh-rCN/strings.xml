@@ -1133,12 +1133,6 @@
     <string name="console_log_desc" translatable="true">日志可能包含敏感信息。</string>
     <string name="do_not_randomize_listen_port_title" translatable="true">不要随机化 WireGuard 监听端口</string>
     <string name="do_not_randomize_listen_port_desc" translatable="true">在高级模式下保持 WireGuard 监听端口固定（不随机化）。</string>
-    <string name="anti_censorship_title" translatable="true">反审查</string>
-    <string name="anti_censorship_desc" translatable="true">从多种反审查技术中进行选择。</string>
-    <string name="ac_title" translatable="true">反审查</string>
-    <string name="ac_desc" translatable="true">反审查工具可以保障互联网自由，但并非在所有地区有效。仅适用于非代理连接。</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
     <string name="lbl_always" translatable="true">始终</string>
     <string name="copied_clipboard" translatable="true">已复制</string>
     <string name="adv_set_dial_timeout_title" translatable="true">空闲超时</string>
@@ -1217,18 +1211,6 @@
     <string name="settings_tunnel_metered" translatable="true">始终按流量计费</string>
     <string name="settings_tunnel_metered_desc" translatable="true">将 Rethink 虚拟专用网络隧道标记为按流量计费，以引导应用减少数据消耗。注意：此举可能导致应用暂停大型上传和下载任务（如备份操作）。</string>
     <string name="stability_program_toast" translatable="true">加入<i>稳定性项目</i>，以体验<i>实验性功能</i>。</string>
-    <string name="ac_never_split_desc" translatable="true">不修改数据包。</string>
-    <string name="ac_split_auto_desc" translatable="true">必要时修改数据包。</string>
-    <string name="ac_split_tcp_desc" translatable="true">修改 TCP 数据包。</string>
-    <string name="ac_split_tls_desc" translatable="true">更改 TCP 或 TLS 数据包。</string>
-    <string name="ac_desync" translatable="true">异步干扰</string>
-    <string name="ac_desync_desc" translatable="true">必要时发送诱饵数据包。</string>
-    <string name="ac_retry_options_title" translatable="true">策略</string>
-    <string name="ac_retry_options_desc" translatable="true">设置受审查连接的重试方式。</string>
-    <string name="ac_retry_options_never_desc" translatable="true">失败时永不重试反审查技术。</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">必要时应用反审查技术。</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">始终应用反审查技术。</string>
-    <string name="ac_toast_retry_disabled" translatable="true">选择任意反审查选项以确定策略。</string>
     <string name="vpn_policy_title" translatable="true">连接变更策略</string>
     <string name="vpn_policy_sensitive" translatable="true">敏感</string>
     <string name="vpn_policy_relaxed" translatable="true">宽松</string>

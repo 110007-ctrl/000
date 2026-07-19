@@ -1679,43 +1679,10 @@
     <string name="endpoint_independent_mapping_title" translatable="true">Endpoint-Independent mapping</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">When enabled, UDP sockets maintain a fixed address and port for all destinations.</string>
 
-    <string name="anti_censorship_title" translatable="true">Anti-censorship</string>
-    <string name="anti_censorship_desc" translatable="true">Choose from various Anti-censorship technique.</string>
-
     <string name="tcp_keep_alive_title" translatable="true">Shorter TCP keep alive</string>
     <string name="tcp_keep_alive_desc" translatable="true">Quickly close TCP sockets with no recent activity.</string>
 
-    <!-- anti-censorship -->
-    <string name="ac_title" translatable="true">anti-censorship</string>
-    <string name="ac_desc" translatable="true">Anti-censorship tools can grant internet freedom, but those may not work everywhere. Only attempted on non-proxied connections.</string>
-
-    <string name="ac_never_split_desc" translatable="true">Do not alter packets.</string>
-
-    <string name="ac_split_auto_desc" translatable="true">Alter packets as necessary.</string>
-
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tcp_desc" translatable="true">Alter TCP packets.</string>
-
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">Alter TCP or TLS packets.</string>
-
-    <string name="ac_desync" translatable="true">Desync</string>
-    <string name="ac_desync_desc" translatable="true">Send decoy packets as necessary.</string>
-
-    <string name="ac_tcp_proxy" translatable="false">Hybrid</string>
-    <string name="ac_tcp_proxy_desc" translatable="false">Also uses proxy as necessary.</string>
-
-    <string name="ac_retry_options_title" translatable="true">strategy</string>
-    <string name="ac_retry_options_desc" translatable="true">Set how retries work for censored connections.</string>
-
-    <string name="ac_retry_options_never_desc" translatable="true">On failure, never retry anti-censorship techniques.</string>
-
-    <string name="ac_retry_options_with_split_desc" translatable="true">Apply anti-censorship techniques when necessary.</string>
-
     <string name="lbl_always" translatable="true">Always</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Always apply anti-censorship techniques.</string>
-
-    <string name="ac_toast_retry_disabled" translatable="true">Pick any anti-censorship option to choose strategy.</string>
 
     <string name="exclude_no_package_err_toast" translatable="true">Excluding apps requires a package name.</string>
 

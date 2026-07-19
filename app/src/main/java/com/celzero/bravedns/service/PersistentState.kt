@@ -23,7 +23,6 @@ import androidx.lifecycle.MutableLiveData
 import com.celzero.bravedns.R
 import com.celzero.bravedns.data.AppConfig
 import com.celzero.bravedns.database.DnsCryptRelayEndpoint
-import com.celzero.bravedns.ui.activity.AntiCensorshipActivity
 import com.celzero.bravedns.util.Constants
 import com.celzero.bravedns.util.Constants.Companion.INIT_TIME_MS
 import com.celzero.bravedns.util.Constants.Companion.INVALID_PORT
@@ -67,8 +66,6 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
         const val NOTIFICATION_PERMISSION = "notification_permission_request"
         const val EXCLUDE_APPS_IN_PROXY = "exclude_apps_in_proxy"
         const val BIOMETRIC_AUTH = "biometric_authentication"
-        const val ANTI_CENSORSHIP_TYPE = "dial_strategy"
-        const val RETRY_STRATEGY = "retry_strategy"
         const val ENDPOINT_INDEPENDENCE = "endpoint_independence"
         const val TCP_KEEP_ALIVE = "tcp_keep_alive"
         const val USE_SYSTEM_DNS_FOR_UNDELEGATED_DOMAINS = "use_system_dns_for_undelegated_domains"
@@ -330,11 +327,7 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
     var pingv6Url by stringPref("ping_ipv6_url").withDefault<String>(Constants.urlV6probes.joinToString(","))
 
 
-    // anti-censorship type (auto, split_tls, split_tcp, desync)
-    var dialStrategy by intPref("dial_strategy").withDefault<Int>(AntiCensorshipActivity.DialStrategies.SPLIT_AUTO.mode)
 
-    // retry strategy type (before split, after split, never)
-    var retryStrategy by intPref("retry_strategy").withDefault<Int>(AntiCensorshipActivity.RetryStrategies.RETRY_AFTER_SPLIT.mode)
 
     // bypass blocking in dns level, decision is made in flow() (see BraveVPNService#flow)
     var bypassBlockInDns by booleanPref("bypass_block_in_dns").withDefault<Boolean>(false)

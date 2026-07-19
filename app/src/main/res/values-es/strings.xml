@@ -1105,13 +1105,7 @@
     <string name="firewall_rule_paused_app" translatable="true">Aplicación Pausada</string>
     <string name="config_invalid_desc" translatable="true">Configuración de WireGuard inválida</string>
     <string name="console_log_desc" translatable="true">Los registros pueden contener información sensible.</string>
-    <string name="anti_censorship_title" translatable="true">Anti-censura</string>
-    <string name="ac_title" translatable="true">anti-censura</string>
-    <string name="ac_desc" translatable="true">Las herramientas contra la censura pueden conceder libertad en Internet, pero puede que no funcionen en todas partes. Solo lo intentan en conexiones sin proxy.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_retry_options_title" translatable="true">estrategia</string>
     <string name="lbl_always" translatable="true">Siempre</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Siempre aplicar técnicas anti-censura.</string>
     <string name="lbl_ultra_secure" translatable="true">ultra seguro</string>
     <string name="blocklist_not_available_toast" translatable="true">Para actualizar las listas de bloqueo, descarga la última versión de la app.</string>
     <string name="about_terms_of_service" translatable="true">Términos de Servicio</string>
@@ -1169,20 +1163,8 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">Mantener fijos los puertos de escucha de WireGuard (sin aleatorización) en el modo Avanzado.</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Mapeo independiente del extremo</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Cuando está activado, los sockets UDP mantienen una dirección y un puerto fijos para todos los destinos.</string>
-    <string name="anti_censorship_desc" translatable="true">Elija entre varias técnicas anticensura.</string>
     <string name="tcp_keep_alive_title" translatable="true">Keep-alive TCP más corto</string>
     <string name="tcp_keep_alive_desc" translatable="true">Cerrar rápidamente los sockets TCP sin actividad reciente.</string>
-    <string name="ac_never_split_desc" translatable="true">No alterar los paquetes.</string>
-    <string name="ac_split_auto_desc" translatable="true">Alterar los paquetes según sea necesario.</string>
-    <string name="ac_split_tcp_desc" translatable="true">Alterar los paquetes TCP.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">Alterar los paquetes TCP o TLS.</string>
-    <string name="ac_desync" translatable="true">Desincronización</string>
-    <string name="ac_desync_desc" translatable="true">Enviar paquetes señuelo según sea necesario.</string>
-    <string name="ac_retry_options_desc" translatable="true">Configurar cómo funcionan los reintentos en conexiones censuradas.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">En caso de fallo, no volver a intentar técnicas anticensura.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Aplicar técnicas anticensura cuando sea necesario.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Elija cualquier opción anticensura para seleccionar una estrategia.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Excluir aplicaciones requiere un nombre de paquete.</string>
     <string name="hop_error_toast_msg_1" translatable="true">No se puede retransmitir, ya está %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">No hay WireGuard disponible para retransmitir; añada más.</string>

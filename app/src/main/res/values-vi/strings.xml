@@ -794,27 +794,9 @@
     <string name="cd_remove_dialog_title" translatable="true">Xóa tên miền ?</string>
     <string name="hop_error_toast_msg_2" translatable="true">Không có WireGuard có sẵn cho rơ le; vui lòng bổ sung</string>
     <string name="exclude_no_package_err_toast" translatable="true">Loại trừ ứng dụng yêu cầu tên gói</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Chọn bất kỳ phương thức chống kiểm duyệt nào để chọn chiến lược</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Luôn luôn áp dụng các kỹ thuật chống kiểm duyệt.</string>
     <string name="lbl_always" translatable="true">Luôn luôn</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Áp dụng biện pháp kỹ thuật chống kiểm duyệt khi cần thiết.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">Khi thất bại, không bao giờ thử lại các biện pháp kỹ thuật chống kiểm duyệt.</string>
-    <string name="ac_retry_options_desc" translatable="true">Đặt số lượt thử lại cho các kết nối bị kiểm duyệt</string>
-    <string name="ac_retry_options_title" translatable="true">chiến lược</string>
-    <string name="ac_desync_desc" translatable="true">Gửi các gói tin mồi nhử khi cần thiết</string>
-    <string name="ac_desync" translatable="true">Không đồng bộ</string>
-    <string name="ac_split_tls_desc" translatable="true">Thay đổi các gói tin TCP hoặc TLS</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tcp_desc" translatable="true">Thay đổi các gói tin TCP</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_auto_desc" translatable="true">Thay đổi các gói tin khi cần thiết</string>
-    <string name="ac_never_split_desc" translatable="true">Không thay đổi gói tin.</string>
-    <string name="ac_desc" translatable="true">Các công cụ chống kiểm duyệt cung cấp tự do Internet, nhưng chúng không hoạt động ở mọi nơi. Chỉ được thử trên kết nối không proxy</string>
-    <string name="ac_title" translatable="true">chống kiểm duyệt</string>
     <string name="tcp_keep_alive_desc" translatable="true">Nhanh chóng đóng cổng TCP khi không có hoạt động gần đây.</string>
     <string name="tcp_keep_alive_title" translatable="true">Rút ngắn thời gian duy trì kết nối (TCP)</string>
-    <string name="anti_censorship_desc" translatable="true">Chọn từ nhiều biện pháp kỹ thuật chống kiểm duyệt.</string>
-    <string name="anti_censorship_title" translatable="true">chống kiểm duyệt</string>
     <string name="console_log_desc" translatable="true">Nhật ký có thể chứa thông tin nhạy cảm.</string>
     <string name="console_log_title" translatable="true">Các nhật ký ứng dụng</string>
     <string name="network_dns" translatable="true">DNS hệ thống</string>

@@ -1036,26 +1036,9 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">Агәаҭадаратә режим аҟны WireGuard аиқәыршааз апортқәа аих ашәахәамызтәиит (аих ашәахьамҧшаамызтәиит).</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Аҧсуа бызшәала: Адҵысцәа шрак иахьӡаауаҭахарҭа</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">UDP шаблаққәа аишьҭаҵра аан, еиҧш, аадгоуп аус ауеит амҩадулара ваnte.</string>
-    <string name="anti_censorship_title" translatable="true">Амцәаабеира шьаҟамлара</string>
-    <string name="anti_censorship_desc" translatable="true">Ҳашәарнык ацәымпарашәалара акцәыхәқәа рызнархәа.</string>
     <string name="tcp_keep_alive_title" translatable="true">Мыжәаҭрала TCP us-ажәахә</string>
     <string name="tcp_keep_alive_desc" translatable="true">Аҭаацәаратә TCP ахыбрақәа, алагалара аан аусура аҟамлара иахәыԥшын.</string>
-    <string name="ac_title" translatable="true">аишьҟьашьаҿаашьҭыхра</string>
-    <string name="ac_desc" translatable="true">Антицензура ақәымчқәа аинтернет арежим аиҭынразы иухысуахоит, аха еиуиамлак аҿы аус аубжьуам. Апрокси зымҵкәа аилкаарақәа раҿы имҩаԥысуаит.</string>
-    <string name="ac_never_split_desc" translatable="true">Апацқьар рымцара амам.</string>
-    <string name="ac_split_auto_desc" translatable="true">Апаққәа ашәашәаҧш.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tcp_desc" translatable="true">TCP-шәылақәа аиҭаҵра.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">TCP асси TLS апацқьарра аиҭашәахәаҟәаҟәа.</string>
-    <string name="ac_desync" translatable="true">Ашәахәра мап ацклаԥш</string>
-    <string name="ac_desync_desc" translatable="true">А-цәажәарақәа ахьчараз ашәахәырҧшқәа рышьҭыжь.</string>
-    <string name="ac_retry_options_title" translatable="true">аҵыхәра</string>
-    <string name="ac_retry_options_desc" translatable="true">Ажәақәа рызгәаҭа, еицҿыххааны усхулак ацәырызхаауа ақәырԥшрақәа рзы.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">Шәышьҟа агәамҧшра ашьҭа аи hjælpa атехникақәа риаҵәаа.</string>
     <string name="lbl_always" translatable="true">Ҳамеун</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Анти-цензура атехникақәа зегь рышьҭала.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Уахэщэныгъэжьым и цIыкIукъымщIоу хъэщыгъупIэр фыщыхъуфыныр къэмыхьысыныр щыхъущт.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Амҳәақәқәра ажьырныруа амҩақәҵәа апакет азымхымҭа аҭахуп.</string>
     <string name="hop_error_toast_msg_1" translatable="true">Уадаҩыла аднапылара, уахьаҭыршәлан %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">WireGuard аламҧшра азы аах чар; еиҳарак ацым \"}</string>

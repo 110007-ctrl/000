@@ -1023,13 +1023,6 @@
     <string name="console_log_title" translatable="true">سجلات التطبيق</string>
     <string name="console_log_desc" translatable="true">قد تحتوي السجلات على معلومات حساسة.</string>
     <string name="lbl_always" translatable="true">دائماً</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">إستخدم دائمًا تقنيات مكافحة الرقابة.</string>
-    <string name="anti_censorship_title" translatable="true">مكافحة الرقابة</string>
-    <string name="anti_censorship_desc" translatable="true">إختر من بين تقنيات مكافحة الرقابة المتنوعة.</string>
-    <string name="ac_title" translatable="true">مكافحة الرقابة</string>
-    <string name="ac_retry_options_desc" translatable="true">قم بتعيين كيفية عمل إعادة المحاولة للاتصالات الخاضعة للرقابة.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">تطبيق تقنيات مكافحة الرقابة عندما يكون ذلك ضروريا.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">اختر أي خيار مضاد للرقابة لاختيار الاستراتيجية.</string>
     <string name="cd_dns_alg_desc" translatable="true">تعيين عنوان IP فريد لكل طلب DNS.</string>
     <string name="cd_split_dns_heading" translatable="true">تقسيم DNS (تجريبي)</string>
     <string name="cd_split_dns_desc" translatable="true">إعادة توجيه إستعلامات DNS من التطبيقات الوكيلة إلى خوادم DNS الخاصة بالوكيل.</string>

@@ -1128,27 +1128,9 @@
     <string name="do_not_randomize_listen_port_desc" translatable="true">Держите порты прослушивания WireGuard фиксированными (без рандомизации) в расширенном режиме.</string>
     <string name="endpoint_independent_mapping_title" translatable="true">Сопоставление, не зависящее от конечных точек</string>
     <string name="endpoint_independent_mapping_desc" translatable="true">Когда включён, Сскеты UDP поддерживают фиксированный адрес и порт для всех пунктов назначения.</string>
-    <string name="anti_censorship_title" translatable="true">Антицензура</string>
-    <string name="anti_censorship_desc" translatable="true">Выбирайте из различных методов антицензуры.</string>
     <string name="tcp_keep_alive_title" translatable="true">Более короткий TCP keep alive</string>
     <string name="tcp_keep_alive_desc" translatable="true">Быстро закрывать TCP-сокеты без какой-либо активности в последнее время.</string>
-    <string name="ac_title" translatable="true">Антицензура</string>
-    <string name="ac_desc" translatable="true">Инструменты антицензуры могут обеспечить свободу в интернете, но они могут работать не везде. Используется только при подключению не через прокси.</string>
-    <string name="ac_never_split_desc" translatable="true">Не изменять пакеты.</string>
-    <string name="ac_split_auto_desc" translatable="true">При необходимости изменять пакеты.</string>
-    <string name="ac_split_tcp" translatable="true">TCP</string>
-    <string name="ac_split_tcp_desc" translatable="true">Изменять TCP-пакеты.</string>
-    <string name="ac_split_tls" translatable="true">TCP/TLS</string>
-    <string name="ac_split_tls_desc" translatable="true">Изменять TCP или TLS пакеты.</string>
-    <string name="ac_desync" translatable="true">Рассинхронизация</string>
-    <string name="ac_desync_desc" translatable="true">При необходимости отправляйте пакеты-приманки.</string>
-    <string name="ac_retry_options_title" translatable="true">Стратегия</string>
-    <string name="ac_retry_options_desc" translatable="true">Укажите, как будут работать повторные попытки для подключений с цензурой.</string>
-    <string name="ac_retry_options_never_desc" translatable="true">В случае неудачи никогда не повторяйте попыток борьбы с цензурой.</string>
-    <string name="ac_retry_options_with_split_desc" translatable="true">При необходимости применять методы антицензуры.</string>
     <string name="lbl_always" translatable="true">Всегда</string>
-    <string name="ac_retry_options_after_split_desc" translatable="true">Всегда применяйте методы антицензуры.</string>
-    <string name="ac_toast_retry_disabled" translatable="true">Выберите любой вариант антицензуры, чтобы выбрать стратегию.</string>
     <string name="exclude_no_package_err_toast" translatable="true">Для исключения приложений требуется имя пакета.</string>
     <string name="hop_error_toast_msg_1" translatable="true">Не удается ретранслировать, уже %1$s</string>
     <string name="hop_error_toast_msg_2" translatable="true">WireGuard не доступен для relay; пожалуйста добавьте больше.</string>
