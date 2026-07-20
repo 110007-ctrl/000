@@ -193,7 +193,7 @@ object UsqueManager {
             return true
         }
 
-        try {
+        return try {
             val bin = getBinary(ctx)
             if (!bin.exists() || !bin.canExecute()) {
                 dlog(ctx, "startSocksProxy: binary not ready exists=${bin.exists()} canExec=${bin.canExecute()}")
