@@ -543,8 +543,18 @@ class WgConfigAdapter(private val context: Context, private val listener: DnsSta
 
             if (WireguardManager.canDisableConfig(cfg)) {
                 WireguardManager.disableConfig(cfg)
+                // Bug fix: cancel the continuous status-poll job immediately after disabling.
+                // Without this, the coroutine launched in updateStatusJob() still holds the
+                // old WgConfigFiles snapshot (isActive=true) and resets isChecked back to
+                // true on the next 1500 ms tick — making the checkbox appear stuck.
+                cancelJobIfAny()
+                uiCtx {
+                    b.interfaceSwitch.isChecked = false
+                }
                 logEvent("Wireguard disable", "Disabled WireGuard config: ${cfg.name} (id: ${cfg.id})")
             } else {
+                // Config cannot be disabled (catch-all or hop source); snap the switch back
+                // to the checked state so the UI accurately reflects the enforced policy.
                 if (cfg.isCatchAll) {
                     uiCtx {
                         Utilities.showToastUiCentered(

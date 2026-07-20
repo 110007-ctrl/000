@@ -37,6 +37,7 @@ import com.celzero.bravedns.backup.BackupHelper.Companion.getFileNameFromPath
 import com.celzero.bravedns.backup.BackupHelper.Companion.getRethinkDatabase
 import com.celzero.bravedns.backup.BackupHelper.Companion.getTempDir
 import com.celzero.bravedns.backup.BackupHelper.Companion.startVpn
+import com.celzero.bravedns.database.AppDatabase
 import com.celzero.bravedns.service.PersistentState
 import com.celzero.bravedns.util.Utilities
 import com.celzero.bravedns.util.Utilities.copyWithStream
@@ -63,6 +64,44 @@ class BackupAgent(val context: Context, workerParams: WorkerParameters) :
 
     companion object {
         const val TAG = "BackupExport"
+
+        /**
+         * Exhaustive set of SharedPreferences keys that constitute the firewall configuration.
+         *
+         * Only these keys are included in a firewall-only backup. DNS server settings,
+         * WireGuard credentials, proxy settings, analytics toggles, and UI-only state are
+         * deliberately excluded so that restoring a backup cannot silently reconfigure
+         * the user's DNS or VPN transport.
+         */
+        val FIREWALL_PREF_KEYS: Set<String> = setOf(
+            // Operation mode (DNS-only / DNS+Firewall)
+            "brave_mode",
+            // Universal firewall rules
+            "block_udp_traffic_other_than_dns",
+            "block_unknown_connections",
+            "block_http_connections",
+            "block_metered_connections",
+            "universal_lockdown",
+            "block_new_app",
+            "disallow_dns_bypass",
+            "background_mode",           // block apps in background
+            "screen_state",              // block when device locked
+            "block_non_ip_dns_responses",
+            "block_icmp",
+            // Firewall bypass control
+            "allow_bypass",
+            // Firewall bubble overlay feature
+            "pref_firewall_bubble_enabled",
+            // Local blocklist (used by the firewall for DNS-level blocking)
+            "enable_local_list",
+            "local_block_list_stamp",
+            "local_block_list_downloaded_time",
+            "local_block_list_count",
+            // Global WireGuard lockdown (firewall-level kill-switch for WG)
+            "wg_global_lockdown",
+            // App version — needed by the restore path to validate compatibility
+            "app_version"
+        )
     }
 
     override fun doWork(): Result {
@@ -224,21 +263,34 @@ class BackupAgent(val context: Context, workerParams: WorkerParameters) :
         }
     }
 
+    /**
+     * Firewall-config backup: only include [AppDatabase.DATABASE_NAME] (and its WAL/SHM
+     * siblings). That database holds AppInfo (per-app firewall rules), CustomIp, and
+     * CustomDomain — the tables that represent the user's firewall state.
+     *
+     * The log database is intentionally excluded: it contains ephemeral connection-tracking
+     * data that is not part of the firewall configuration.
+     */
     private fun saveDatabasesToFile(path: String): Boolean {
         val files = getRethinkDatabase(context)?.listFiles() ?: return false
 
         for (f in files) {
             Logger.d(
+                LOG_TAG_BACKUP_RESTORE,
+                "file ${f.name} found in database dir (${f.absolutePath})"
+            )
+
+            // Firewall-only policy: skip every file that does not belong to the main
+            // app database (bravedns.db). WAL and SHM siblings of bravedns.db are kept
+            // because they are required for a consistent Room restore.
+            if (!f.name.startsWith(AppDatabase.DATABASE_NAME)) {
+                Logger.d(
                     LOG_TAG_BACKUP_RESTORE,
-                    "file ${f.name} found in database dir (${f.absolutePath})"
+                    "firewall-only backup: skipping non-firewall db file: ${f.name}"
                 )
-            // looks like the journal, shm and wal files are needed for proper restore, so
-            // commenting out the below code. still testing it out.
-            // TODO: check if the journal files are needed for restore
-            // skip journal files, they are not needed for restore
-            /*if (f.path.endsWith("-journal") || f.path.endsWith("-shm") || f.path.endsWith("-wal")) {
                 continue
-            }*/
+            }
+
             val databaseFile =
                 backUpFile(f.absolutePath, constructDbFileName(path, f.name)) ?: return false
             Logger.i(LOG_TAG_BACKUP_RESTORE, "file ${databaseFile.name} added to backup dir")
@@ -264,6 +316,10 @@ class BackupAgent(val context: Context, workerParams: WorkerParameters) :
     // (Boolean/Int/Long/Float/String/Set<String>) are exported, matching what
     // SharedPreferences supports. The restore side parses with org.json (no class
     // instantiation), validates types per key, and rejects any old-format binary blob.
+    //
+    // Firewall-only policy: only the pref keys listed in FIREWALL_PREF_KEYS are exported.
+    // DNS settings, WireGuard configs, proxy settings, and app-update state are excluded
+    // so that restoring a backup cannot silently override the user's DNS/VPN configuration.
     private fun saveSharedPreferencesToFile(context: Context, prefFile: File): Boolean {
         Logger.i(LOG_TAG_BACKUP_RESTORE, "begin shared pref copy, file path:${prefFile.path}")
         val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -272,6 +328,11 @@ class BackupAgent(val context: Context, workerParams: WorkerParameters) :
             val entries = org.json.JSONArray()
             for ((k, v) in sharedPrefs.all) {
                 if (k == null) continue
+                // Firewall-only filter: skip any pref that is not part of the firewall config.
+                if (k !in FIREWALL_PREF_KEYS) {
+                    Logger.d(LOG_TAG_BACKUP_RESTORE, "firewall-only backup: skipping pref '$k'")
+                    continue
+                }
                 val item = org.json.JSONObject()
                 item.put("k", k)
                 when (v) {

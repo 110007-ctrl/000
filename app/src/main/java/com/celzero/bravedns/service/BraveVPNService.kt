@@ -355,6 +355,15 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         const val ACTION_USQUE_DOZE_WATCHDOG = "com.celzero.bravedns.USQUE_DOZE_WATCHDOG"
         // Doze watchdog alarm interval: 9 min matches Android's minimum setExactAndAllowWhileIdle cadence
         private const val USQUE_DOZE_ALARM_INTERVAL_MS = 9 * 60 * 1000L
+
+        // --- DNS transport health watchdog ---
+        // Poll interval for the DNS health watchdog (30 s).
+        private const val DNS_WATCHDOG_POLL_MS = 30_000L
+        // Number of consecutive null-status polls before triggering a transport refresh.
+        // 3 × 30 s = 90 s of continuous DNS failure before auto-recovery kicks in.
+        private const val DNS_WATCHDOG_FAIL_THRESHOLD = 3
+        // Maximum back-off between recovery attempts (10 min).
+        private const val DNS_WATCHDOG_MAX_BACKOFF_MS = 10 * 60_000L
     }
 
     private var lastSubscriptionCheckTime: Long = 0
@@ -1729,6 +1738,95 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         dnscryptRelayObserver = makeDnscryptRelayObserver()
         persistentState.dnsCryptRelays.observeForever(dnscryptRelayObserver)
         Logger.i(LOG_TAG_VPN, "observe pref, dnscrypt relay, app list changes")
+        // Start the DNS transport health watchdog for 24/7 server resilience.
+        launchDnsHealthWatchdog()
+    }
+
+    /**
+     * DNS transport health watchdog — critical for 24/7 server deployments.
+     *
+     * DoH and DoT transports silently enter a broken state after network interruptions,
+     * certificate rotations, or server-side TCP RSTs.  Without active recovery the
+     * VPN service shows "DNS Server Down" indefinitely even after connectivity is
+     * restored, because the Go-side transport holds a stale, half-open HTTP/2 or TLS
+     * connection and never sees a fresh failure that would trigger a dial.
+     *
+     * Recovery strategy:
+     *   1. Every [DNS_WATCHDOG_POLL_MS] the watchdog reads the preferred DNS transport
+     *      status via [getDnsStatus].
+     *   2. Null status (transport not registered) or a known error code increments
+     *      [failCount].
+     *   3. After [DNS_WATCHDOG_FAIL_THRESHOLD] consecutive failures the watchdog calls
+     *      [refreshResolvers] to flush stale HTTP/2 / TLS connections, and then
+     *      [addTransport] to re-register the transport with the tunnel.
+     *   4. Subsequent recovery attempts use exponential back-off capped at
+     *      [DNS_WATCHDOG_MAX_BACKOFF_MS] so the watchdog does not hammer a genuinely
+     *      unreachable server.
+     *   5. A successful status resets the failure counter and back-off delay.
+     *
+     * The watchdog is intentionally simple and defensive: it does not replace the
+     * existing restart / reconnect paths — it only adds a safety net for the case
+     * where those paths are not triggered (e.g. the network appears "up" at the
+     * Android layer but the DoH server's HTTP/2 session is silently broken).
+     */
+    private fun launchDnsHealthWatchdog() {
+        val pollMs = DNS_WATCHDOG_POLL_MS
+        val failThreshold = DNS_WATCHDOG_FAIL_THRESHOLD
+        val maxBackoff = DNS_WATCHDOG_MAX_BACKOFF_MS
+
+        io("dnsHealthWatchdog") {
+            var failCount = 0
+            var backoffMs = pollMs
+            Logger.i(LOG_TAG_VPN, "dnsWatchdog: started (poll=${pollMs}ms, threshold=$failThreshold)")
+
+            while (true) {
+                kotlinx.coroutines.delay(backoffMs)
+
+                // Only check when the VPN tunnel is actually up.
+                if (vpnAdapter == null || !persistentState.getVpnEnabled()) {
+                    // Tunnel is not running; reset state and wait with normal poll interval.
+                    failCount = 0
+                    backoffMs = pollMs
+                    continue
+                }
+
+                // Prefer the active transport ID based on the current DNS mode.
+                val transportId = if (appConfig.isSmartDnsEnabled()) {
+                    com.celzero.firestack.backend.Backend.Plus
+                } else {
+                    com.celzero.firestack.backend.Backend.Preferred
+                }
+
+                val status: Long? = getDnsStatus(transportId)
+
+                if (status != null) {
+                    // Transport is reachable — reset failure tracking.
+                    if (failCount > 0) {
+                        Logger.i(LOG_TAG_VPN, "dnsWatchdog: DNS recovered after $failCount failures (status=$status)")
+                    }
+                    failCount = 0
+                    backoffMs = pollMs
+                } else {
+                    failCount++
+                    Logger.w(LOG_TAG_VPN, "dnsWatchdog: DNS status null, fail=$failCount/$failThreshold, transport=$transportId")
+
+                    if (failCount >= failThreshold) {
+                        Logger.e(LOG_TAG_VPN, "dnsWatchdog: DNS failing for ${failCount * pollMs / 1000}s — flushing and re-registering transport")
+                        try {
+                            // Step 1: flush stale HTTP/2 / TLS connections in the Go transport.
+                            refreshResolvers()
+                            // Step 2: re-register the DNS transport with the current configuration.
+                            addTransport()
+                            Logger.i(LOG_TAG_VPN, "dnsWatchdog: transport refresh triggered (attempt $failCount)")
+                        } catch (e: Exception) {
+                            Logger.crash(LOG_TAG_VPN, "dnsWatchdog: error during transport refresh: ${e.message}", e)
+                        }
+                        // Exponential back-off so we don't hammer a genuinely unreachable server.
+                        backoffMs = minOf(backoffMs * 2, maxBackoff)
+                    }
+                }
+            }
+        }
     }
 
     private fun makeDnscryptRelayObserver(): Observer<PersistentState.DnsCryptRelayDetails> {

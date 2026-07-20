@@ -31,6 +31,7 @@ import com.celzero.bravedns.backup.BackupHelper.Companion.SHARED_PREFS_BACKUP_FI
 import com.celzero.bravedns.backup.BackupHelper.Companion.VERSION
 import com.celzero.bravedns.backup.BackupHelper.Companion.deleteResidue
 import com.celzero.bravedns.backup.BackupHelper.Companion.getTempDir
+import com.celzero.bravedns.backup.BackupHelper.Companion.startVpn
 import com.celzero.bravedns.backup.BackupHelper.Companion.stopVpn
 import com.celzero.bravedns.backup.BackupHelper.Companion.unzip
 import com.celzero.bravedns.database.AppDatabase
@@ -101,6 +102,10 @@ class RestoreAgent(val context: Context, workerParams: WorkerParameters) :
 
         Logger.i(LOG_TAG_BACKUP_RESTORE, "completed restore process, is successful? $result")
         return if (result) {
+            // Bug fix: restart VPN after a successful restore so DNS resolves immediately;
+            // previously stopVpn() was called at the start of restore but startVpn() was
+            // never called on the success path, leaving the tunnel permanently down.
+            startVpn(context)
             Result.success()
         } else {
             Result.failure()
@@ -242,13 +247,14 @@ class RestoreAgent(val context: Context, workerParams: WorkerParameters) :
         )
         for (file in files) {
             val currentDbFile = File(context.getDatabasePath(file.name).path)
-            if (
-                !file.name.contains(AppDatabase.DATABASE_NAME) &&
-                    !file.name.contains(LogDatabase.LOGS_DATABASE_NAME)
-            ) {
-                Logger.w(
+            // Firewall-only restore: only restore files that belong to the main app database.
+            // LogDatabase is excluded because (a) it was not backed up in a firewall-only
+            // backup and (b) restoring connection logs from an older backup would produce
+            // confusing stale entries that are not representative of the current state.
+            if (!file.name.startsWith(AppDatabase.DATABASE_NAME)) {
+                Logger.d(
                     LOG_TAG_BACKUP_RESTORE,
-                    "restore process, file name is not db, file name: ${file.name}"
+                    "firewall-only restore: skipping non-firewall db file: ${file.name}"
                 )
                 continue
             }
