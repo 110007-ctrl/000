@@ -73,6 +73,11 @@ class BackupHelper {
         // while restoring the wireguard config, the temp dir to store the wireguard config
         const val TEMP_WG_DIR = "temp_wireguard"
 
+        // firewall-only backup file names (new format, replaces full-db + prefs backup)
+        const val FIREWALL_IP_RULES_FILE_NAME = "firewall_ip_rules.json"
+        const val FIREWALL_DOMAIN_RULES_FILE_NAME = "firewall_domain_rules.json"
+        const val FIREWALL_APP_RULES_FILE_NAME = "firewall_app_rules.json"
+
         // metadata constants
         // version
         const val VERSION = "version"
@@ -80,6 +85,9 @@ class BackupHelper {
         const val PACKAGE_NAME = "package"
         // time when the backup  is taken
         const val CREATED_TIME = "createdTs"
+        // backup scope tag so the restore path can validate format
+        const val BACKUP_TYPE_KEY = "type"
+        const val BACKUP_TYPE_FIREWALL_ONLY = "firewall_only"
 
         fun getTempDir(context: Context): File {
             // temp dir (files/Rethink/)

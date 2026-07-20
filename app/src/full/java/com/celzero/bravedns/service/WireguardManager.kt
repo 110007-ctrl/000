@@ -270,10 +270,13 @@ object WireguardManager : KoinComponent {
     }
 
     fun canDisableConfig(map: WgConfigFilesImmutable): Boolean {
+        // Catch-all restriction removed: the user must be able to uncheck any config,
+        // including a catch-all one.  The only hard block is a config that is currently
+        // acting as a hop/src in a multi-hop chain — removing it mid-chain would break
+        // all tunnels that depend on it.
         return when {
-            map.isCatchAll -> false // cannot disable catch-all
-            WgHopManager.isWgEitherHopOrSrc(map.id) -> false // cannot disable hop/via
-            else -> true // safe to disable
+            WgHopManager.isWgEitherHopOrSrc(map.id) -> false // cannot disable active hop/via
+            else -> true
         }
     }
 

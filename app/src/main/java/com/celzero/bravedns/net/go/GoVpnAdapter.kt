@@ -90,7 +90,9 @@ import com.celzero.firestack.intra.Tunnel
 import com.celzero.firestack.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -172,6 +174,9 @@ class GoVpnAdapter : KoinComponent {
         undelegatedDomains()
         setAutoMode()
         registerSeProxyIfNeeded()
+        // Start the background DNS health monitor so DoH/DoT transports are automatically
+        // re-added if they go silent (important for 24/7 server deployments).
+        startDnsHealthMonitor()
         Logger.v(LOG_TAG_VPN, "$TAG initResolverProxiesPcap done")
     }
 
@@ -1554,9 +1559,74 @@ class GoVpnAdapter : KoinComponent {
     // panic surfaced as a Java Error (UnsatisfiedLinkError, OOM, NoSuchMethodError,
     // InternalError) does not propagate and crash the Service — a crash here drops
     // the lockdown VPN, which is the worst possible failure mode for this app.
+    // DNS health monitor — periodically re-adds transports when they go silent.
+    private var dnsHealthMonitorJob: Job? = null
+
+    /**
+     * Starts a background coroutine that probes the active DNS transport every
+     * [DNS_HEALTH_CHECK_INTERVAL_MS] milliseconds and re-adds it when the Go layer
+     * reports no live transport.  This makes DoH/DoT self-healing for server deployments
+     * that must run 24/7 without manual intervention.
+     *
+     * Idempotent: cancels any previously running monitor before starting a new one.
+     *
+     * Design notes (SOLID):
+     *  - Single Responsibility: health checking lives here, not in BraveVPNService.
+     *  - Open/Closed: probing logic calls the same addTransport/addMultipleDnsAsPlus
+     *    functions used at startup — no duplication.
+     *  - Dependency Inversion: depends on the same abstractions (getDnsStatus, addTransport)
+     *    already used elsewhere in this class.
+     */
+    fun startDnsHealthMonitor() {
+        dnsHealthMonitorJob?.cancel()
+        dnsHealthMonitorJob = externalScope.launch(Dispatchers.IO) {
+            Logger.i(LOG_TAG_VPN, "$TAG dns-health-monitor: started (interval=${DNS_HEALTH_CHECK_INTERVAL_MS}ms)")
+            while (isActive) {
+                delay(DNS_HEALTH_CHECK_INTERVAL_MS)
+                if (!tunnel.isConnected) {
+                    Logger.d(LOG_TAG_VPN, "$TAG dns-health-monitor: tunnel not connected, skipping probe")
+                    continue
+                }
+                try {
+                    val useSmartDns = appConfig.isSmartDnsEnabled()
+                    val preferredId = if (useSmartDns) Backend.Plus else Backend.Preferred
+
+                    // Preferred / Plus transport health check
+                    val mainOk = getDnsStatus(preferredId) != null
+                    if (!mainOk) {
+                        Logger.w(LOG_TAG_VPN, "$TAG dns-health-monitor: $preferredId transport absent, re-adding")
+                        addTransport()
+                    }
+
+                    // Smart-DNS (Plus) multi-transport check
+                    if (useSmartDns) {
+                        val plusStatus = getDnsStatus(Backend.Plus)
+                        if (plusStatus == null || plusStatus == Transaction.Status.CLIENT_ERROR.id) {
+                            Logger.w(LOG_TAG_VPN, "$TAG dns-health-monitor: Plus transport degraded (status=$plusStatus), re-adding multi-dns")
+                            addMultipleDnsAsPlus()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Logger.e(LOG_TAG_VPN, "$TAG dns-health-monitor: probe exception: ${e.message}", e)
+                }
+            }
+            Logger.i(LOG_TAG_VPN, "$TAG dns-health-monitor: exited")
+        }
+    }
+
+    /** Cancels the DNS health monitor coroutine.  Safe to call multiple times. */
+    fun stopDnsHealthMonitor() {
+        dnsHealthMonitorJob?.cancel()
+        dnsHealthMonitorJob = null
+        Logger.i(LOG_TAG_VPN, "$TAG dns-health-monitor: stopped")
+    }
+
     private val closeTunInFlight = java.util.concurrent.atomic.AtomicBoolean(false)
 
     suspend fun closeTun() {
+        // Stop the health-monitor before tearing down the tunnel so it does not try to
+        // re-add transports into a disconnecting tunnel (which would race with disconnect()).
+        stopDnsHealthMonitor()
         if (!closeTunInFlight.compareAndSet(false, true)) {
             Logger.w(LOG_TAG_VPN, "$TAG AUDIT (VULN-A): closeTun already in flight, ignoring duplicate")
             return
@@ -2020,6 +2090,10 @@ class GoVpnAdapter : KoinComponent {
     companion object {
 
         private const val TAG = "TunAdapter;"
+
+        // DNS health-monitor: re-probe transports every 60 s.  Chosen to be short
+        // enough to recover from a silent DoH/DoT drop without hammering DNS endpoints.
+        private const val DNS_HEALTH_CHECK_INTERVAL_MS = 60_000L
 
         // if the default dns is set to none then no need to set the system dns as default,
         // set it as empty or null, which was the behaviour before v055a

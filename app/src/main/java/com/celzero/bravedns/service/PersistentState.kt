@@ -337,7 +337,8 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
     // endpoint independent mapping/filtering
     var endpointIndependence by booleanPref("endpoint_independence").withDefault<Boolean>(false)
 
-    var tcpKeepAlive by booleanPref("tcp_keep_alive").withDefault<Boolean>(false)
+    // Server mode default: keep-alive prevents silent TCP drops on long-idle connections.
+    var tcpKeepAlive by booleanPref("tcp_keep_alive").withDefault<Boolean>(true)
 
     // enable split dns, default on Android R and above, as we can identify app which is sending dns
     var splitDns by booleanPref("split_dns").withDefault<Boolean>(false)
@@ -355,7 +356,9 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
     var rpnProductId by stringPref("rpn_product_id").withDefault<String>("")
 
 
-    var dialTimeoutSec by intPref("dial_timeout_sec").withDefault<Int>(0)
+    // Server mode default: 30 s gives transient-loss retries a fair window without
+    // hanging the tunnel indefinitely on a dead endpoint.
+    var dialTimeoutSec by intPref("dial_timeout_sec").withDefault<Int>(30)
 
     // treat only mobile data as metered
     var treatOnlyMobileNetworkAsMetered by booleanPref("treat_only_mobile_nw_as_metered").withDefault<Boolean>(false)
