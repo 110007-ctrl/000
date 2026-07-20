@@ -6,6 +6,7 @@ import android.util.Log
 import java.io.File
 import java.io.StringWriter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 object UsqueManager {
@@ -129,25 +130,74 @@ object UsqueManager {
     }
 
     suspend fun startSocksProxy(ctx: Context): Boolean = withContext(Dispatchers.IO) {
-        // If already starting, wait for that attempt to finish and return its result.
-        if (isStarting) {
-            startLock.lock()
-            startLock.unlock()
-            return@withContext isRunning()
-        }
-        startLock.lock()
-        isStarting = true
-        portConfirmedAlive = false
-        try {
         // NOTE: do NOT clearDebugLog here — we need the prior register logs for debugging
+        //
+        // Bug-fix: use withLock so the guard is inside the critical section, eliminating the
+        // TOCTOU race where two coroutines both see isStarting=false and both acquire the lock
+        // sequentially, causing the second to kill the process the first just started.
+        startLock.withLock {
+            isStarting = true
+            try {
+                startSocksProxyLocked(ctx)
+            } finally {
+                isStarting = false
+            }
+        }
+    }
+
+    /**
+     * Must only be called while [startLock] is held.
+     *
+     * Fixes four bugs that caused an infinite restart storm and a phantom "STOPPED" UI state:
+     *
+     * 1. TOCTOU race — guard is now inside the lock (see [startSocksProxy]).
+     * 2. probePort hits the dying old process — we now wait for port release before spawning.
+     * 3. Death watcher fires when our own process couldn't bind — watcher is only registered
+     *    when proc.isAlive is confirmed true after probePort, not just when the port answers.
+     * 4. Orphan-process reattach — if the port is alive but our process reference is gone
+     *    (e.g. VPN killed mid-session), we reattach instead of spawning a new (doomed) process.
+     */
+    private fun startSocksProxyLocked(ctx: Context): Boolean {
         dlog(ctx, "startSocksProxy: >>>ENTRY<<<")
-        // Only stop if a process is currently running; don't touch it if already dead.
-        if (process?.isAlive == true) stopSocksProxy()
-        try {
+
+        // ── Fast path: already healthy ─────────────────────────────────────────────────────────
+        // If our process is alive AND the port is responding, there is nothing to do.
+        // Returning true here prevents the needless kill→respawn cycle that triggered the storm.
+        val existingProc = process
+        if (existingProc != null && existingProc.isAlive && isPortAlive()) {
+            dlog(ctx, "startSocksProxy: already running and healthy — skipping restart")
+            portConfirmedAlive = true
+            return true
+        }
+
+        // ── Stop old process and wait for port release ─────────────────────────────────────────
+        // Bug fix 2 & 3: after destroy() the OS process may keep the port bound for tens of ms.
+        // Spawning a new process before the port is free causes an immediate bind-failure exit,
+        // which the death watcher misreads as an unexpected tunnel death and loops forever.
+        if (process != null) {
+            stopSocksProxy()
+            val released = waitForPortRelease(ctx, SOCKS_PORT, timeoutMs = 2000)
+            dlog(ctx, "startSocksProxy: port released=$released after stopSocksProxy")
+            // If the port is still held after 2 s the new spawn will also fail to bind.
+            // Log it and proceed anyway — at least we tried.
+        }
+
+        // ── Orphan reattach ────────────────────────────────────────────────────────────────────
+        // The port can be alive with process==null when the VPN was killed mid-session and the
+        // usque child process survived (different PID namespace). Spawning a duplicate process
+        // would fail to bind. Instead, trust the port probe and reattach in-place; the watchdog
+        // will detect real tunnel degradation within 20 s.
+        if (isPortAlive()) {
+            dlog(ctx, "startSocksProxy: port alive but no process ref — reattaching to orphan usque")
+            portConfirmedAlive = true
+            return true
+        }
+
+        return try {
             val bin = getBinary(ctx)
             if (!bin.exists() || !bin.canExecute()) {
                 dlog(ctx, "startSocksProxy: binary not ready exists=${bin.exists()} canExec=${bin.canExecute()}")
-                return@withContext false
+                return false
             }
 
             val configFile = File(ctx.filesDir, "config.json")
@@ -192,10 +242,15 @@ object UsqueManager {
 
             // Wait for the port to actually be listening (up to 5s) instead of a blind sleep.
             // This prevents a race on slow devices where 1500ms wasn't enough.
-            val alive = probePort(ctx, SOCKS_PORT, timeoutMs = 5000)
-            dlog(ctx, "startSocksProxy: alive=${proc.isAlive} portReady=$alive")
+            val portReady = probePort(ctx, SOCKS_PORT, timeoutMs = 5000)
+            val procAlive = proc.isAlive
+            dlog(ctx, "startSocksProxy: proc.isAlive=$procAlive portReady=$portReady")
 
-            if (alive) {
+            // Bug fix 3: only register the death watcher when our process is *still* alive after
+            // probePort returns. If proc died while we were probing (e.g. couldn't bind because
+            // the orphan-reattach path above was skipped on a borderline race), treat it as a
+            // failure rather than setting portConfirmedAlive and triggering an instant callback.
+            if (portReady && procAlive) {
                 portConfirmedAlive = true
                 // Immediate death detection: daemon thread blocks on waitFor() and fires
                 // deathCallback the instant the usque child process exits unexpectedly.
@@ -214,6 +269,7 @@ object UsqueManager {
                     } catch (_: Exception) {}
                 }.apply { isDaemon = true; name = "usque-death-watcher" }.start()
             } else {
+                portConfirmedAlive = false
                 // Process already exited — collect its output before reporting failure.
                 outThread.join(2000)
                 errThread.join(2000)
@@ -224,17 +280,24 @@ object UsqueManager {
                 process = null
             }
 
-            alive
+            portReady && procAlive
 
         } catch (e: Exception) {
             dlog(ctx, "startSocksProxy: EXCEPTION ${e.message}\n${e.stackTraceToString()}")
             Logger.e(Logger.LOG_TAG_PROXY, "startSocksProxy exception", e)
             false
         }
-        } finally {
-            isStarting = false
-            startLock.unlock()
+    }
+
+    /** Wait until port [port] stops accepting connections or [timeoutMs] elapses. */
+    private fun waitForPortRelease(ctx: Context, port: Int, timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            if (!isPortAlive()) return true
+            Thread.sleep(100)
         }
+        dlog(ctx, "waitForPortRelease: port $port still bound after ${timeoutMs}ms")
+        return false
     }
 
     /** Poll 127.0.0.1:port until it accepts a connection or [timeoutMs] elapses. */
