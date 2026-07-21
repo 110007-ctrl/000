@@ -54,7 +54,7 @@
 \n
 \nRethink non raccoglie informazioni né spia l\'utente in alcun modo.</string>
     <string name="alert_firewall_accessibility_exception">Impossibile aprire le impostazioni di accessibilità. Riprova più tardi!</string>
-    <string name="default_dns_name">RDNS Predefinito</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">URL non valido</string>
     <string name="conn_track_clear_logs_title">Cancellare il registro delle connessioni di rete\?</string>
     <string name="dns_query_clear_logs_title">Cancellare il registro delle connessioni DNS\?</string>

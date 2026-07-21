@@ -119,7 +119,7 @@
     <string name="alert_firewall_accessibility_explanation">Rethink 用咗無障礙服務嚟追蹤你用緊嘅 app（前景）同唔係用緊嘅 app（背景）。
 \n
 \nRethink 並唔會收集任何資料，同埋唔會以任何方式監視您。</string>
-    <string name="default_dns_name">RDNS 默認</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">冇效嘅 URL</string>
     <string name="conn_track_clear_logs_title">係咪要丟哂所有網絡日誌？</string>
     <string name="conn_track_clear_logs_message">咁做只會丟咗網絡日誌，唔會影響防火牆規則。呢個動作冇得返轉頭㗎。請問您係咪想繼續？</string>

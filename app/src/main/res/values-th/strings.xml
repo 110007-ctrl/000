@@ -535,7 +535,7 @@
     <string name="exclude" translatable="true">ไม่รวม</string>
     <string name="brave_dns_connect_mode_change_firewall" translatable="true">เลือกโหมด.</string>
     <string name="brave_dns_connect_mode_change_dns" translatable="true">เลือกโหมด.</string>
-    <string name="default_dns_name" translatable="true">RDNS เริ่มต้น</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="dns_proxy_remove_dialog_title" translatable="true">ลบ DNS Proxy?</string>
     <string name="refresh_complete" translatable="true"><!-- ใช้ dc_refresh_toast --> การซิงค์รายการแอปใหม่เสร็จสมบูรณ์</string>
     <string name="search_dns_logs" translatable="true"><font size="12">ค้นหาชื่อโดเมนหรือ IP</font></string>

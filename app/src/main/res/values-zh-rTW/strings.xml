@@ -45,7 +45,7 @@
     <string name="firewall_mode_info_title">防火牆</string>
     <string name="alert_firewall_accessibility_exception">打開無障礙設定失敗。請稍後重試！</string>
     <string name="brave_dns_connect_mode_change_firewall">選擇模式。</string>
-    <string name="default_dns_name">RDNS 預設</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">無效 URL</string>
     <string name="conn_track_clear_logs_title">是否刪除所有網路日誌？</string>
     <string name="conn_track_clear_logs_message">這僅會刪除網路日誌，不會觸及防火牆規則。此行為不可逆。請問您是否想要繼續？</string>

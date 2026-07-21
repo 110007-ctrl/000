@@ -42,7 +42,7 @@
     <string name="alert_firewall_accessibility_exception">Nepavyko atidaryti pritaikymo neįgaliesiems nustatymų. Bandykite dar kartą vėliau!</string>
     <string name="brave_dns_connect_mode_change_firewall">Pasirinkite režimą.</string>
     <string name="brave_dns_connect_mode_change_dns">Pasirinkite režimą.</string>
-    <string name="default_dns_name">RDNS numatytasis</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">Negalimas URL</string>
     <string name="conn_track_clear_logs_title">Ištrinti visus tinklo žurnalus\?</string>
     <string name="conn_track_clear_logs_message">Taip ištrinami tik tinklo žurnalai, bet ne ugniasienės taisyklės. Ši operacija negrįžtama. Ar norite tęsti\?</string>

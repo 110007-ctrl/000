@@ -113,7 +113,7 @@
     <string name="alert_firewall_accessibility_exception" translatable="true">Неуспело отварање подешавање приступачности. Покушајте поново касније!</string>
     <string name="brave_dns_connect_mode_change_firewall" translatable="true">Изаберите мод.</string>
     <string name="brave_dns_connect_mode_change_dns" translatable="true">Изаберите мод.</string>
-    <string name="default_dns_name" translatable="true">RDNS подразумевано</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="conn_track_clear_logs_title" translatable="true">Обрисати све мрежне записе?</string>
     <string name="conn_track_clear_logs_message" translatable="true">Ово брише само мрежне записе али не и правила заштитног зида. Ова радња је неопозива. Да ли желите да наставите?</string>
     <string name="bsct_app_info" translatable="true">Информације о апликацији</string>

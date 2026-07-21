@@ -128,7 +128,7 @@
     <string name="status_protected_with_proxy">protegido com proxy</string>
     <string name="status_strict" description="This is similar to dns_on, but the protection is being provided by the operating system, not by Rethink.  It is not color-highlighted.">dns privado está ativo</string>
     <string name="dns_mode_info_title">DNS</string>
-    <string name="default_dns_name">RDNS padrão</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">URL inválido</string>
     <string name="conn_track_clear_logs_title">Eliminar todos os registos da rede\?</string>
     <string name="dns_query_clear_logs_title">Eliminar todos os registos DNS\?</string>

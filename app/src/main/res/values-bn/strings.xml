@@ -55,7 +55,7 @@
     <string name="univ_delete_firewall_dialog_message">এই নিয়মগুলি মুছে ফেলার ফলে যেকোনও অ্যাপ্লিকেশন বর্তমানে ব্লক করা আইপিগুলির সাথে সংযোগ করতে পারবে৷</string>
     <string name="about_title_desc">নেটওয়ার্ক নিরাপত্তা হুমকি সনাক্ত এবং ব্লক</string>
     <string name="firewall_rules">নেটওয়ার্কের নিয়ম</string>
-    <string name="default_dns_name">RDNS ডিফল্ট</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="blocklist_update_check_not_required">ব্লকলিস্টগুলি ইতিমধ্যেই সর্বশেষ সংস্করণে রয়েছে৷</string>
     <string name="search_custom_domains"><font size="12">ডোমেন নাম অনুসন্ধান করুন</font></string>
     <string name="settings_http_proxy_error_text4">হোস্ট সংযোগ ব্যর্থ হয়েছে. আবার চেষ্টা করুন.</string>

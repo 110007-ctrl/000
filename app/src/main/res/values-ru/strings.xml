@@ -254,7 +254,7 @@
     <string name="fapps_info_dialog_positive_btn">ОК</string>
     <string name="cd_dns_crypt_title">Резолверы</string>
     <string name="brave_dns_connect_mode_change_firewall">Выберите режим.</string>
-    <string name="default_dns_name">RDNS По умолчанию</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="cd_custom_dns_proxy_default_ip">127.0.0.1</string>
     <string name="settings_local_blocklist_dialog_positive">Установить</string>
     <string name="dns_mode_info_explanation_new">Отслеживайте, блокируйте и шифруйте DNS-запросы.</string>

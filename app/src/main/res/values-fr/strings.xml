@@ -71,7 +71,7 @@
     <string name="status_waiting" description="This text appears during the connection process if Intra needs user permission or the phone is offline.">en attente</string>
     <string name="status_protected_with_http">protégé par proxy HTTP</string>
     <string name="notification_action_stop_vpn">STOP</string>
-    <string name="default_dns_name">RDNS par défaut</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="conn_track_clear_logs_title">Effacer tous les journaux réseau \?</string>
     <string name="notification_action_pause_vpn">PAUSE</string>
     <string name="untracked">non suivi</string>

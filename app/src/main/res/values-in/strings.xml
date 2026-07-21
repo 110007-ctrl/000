@@ -270,7 +270,7 @@
     <string name="socks5_proxy_toast_parameter">Proksi SOCKS5</string>
     <string name="status_protected_with_socks5">terproteksi dengan proksi socks</string>
     <string name="brbs_backup_complete_toast">Selesai mencadangkan</string>
-    <string name="default_dns_name">Bawaan RDNS</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="ci_dialog_added_success">IP telah ditambahkan ke daftar</string>
     <string name="ci_dialog_error_invalid_ip">Alamat IP, subnet atau port tidak sah.</string>
     <string name="local_blocklist_download_desc">Unduh daftar blokir (sekitar 60MB) untuk menggunakan fitur ini\?</string>

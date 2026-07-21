@@ -59,7 +59,7 @@
     <string name="alert_firewall_accessibility_explanation">Rethink verwendet den Dienst für Barrierefreiheit, um zu verfolgen, welche Anwendungen in Gebrauch sind (im Vordergrund) und welche nicht (im Hintergrund). \n \nRethink erfasst keine Daten und spioniert dich in keiner Weise aus.</string>
     <string name="brave_dns_connect_mode_change_firewall">Modus wählen.</string>
     <string name="brave_dns_connect_mode_change_dns">Modus wählen.</string>
-    <string name="default_dns_name">RDNS Standard</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">Ungültige URL</string>
     <string name="conn_track_clear_logs_message">Dabei werden nur die Netzwerk-Logs, nicht aber die Firewall-Regeln gelöscht. Dieser Vorgang ist nicht umkehrbar. Möchtest du fortfahren?</string>
     <string name="dns_query_clear_logs_title">Alle DNS-Logs löschen?</string>
