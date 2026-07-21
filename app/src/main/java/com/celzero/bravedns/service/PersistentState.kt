@@ -155,7 +155,7 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
     var dnsType by
         intPref("dns_type")
             .withDefault<Int>(
-                if (!Utilities.isHeadlessFlavour()) AppConfig.DnsType.RETHINK_REMOTE.type
+                if (!Utilities.isHeadlessFlavour()) AppConfig.DnsType.DOH.type
                 else AppConfig.DnsType.SYSTEM_DNS.type
             )
 
