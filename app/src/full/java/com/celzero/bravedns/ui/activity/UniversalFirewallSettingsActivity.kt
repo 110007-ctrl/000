@@ -92,6 +92,7 @@ class UniversalFirewallSettingsActivity :
         b.firewallAllAppsCheck.isChecked = persistentState.getBlockWhenDeviceLocked()
         b.firewallBackgroundModeCheck.isChecked = persistentState.getBlockAppWhenBackground()
         b.firewallUdpConnectionModeCheck.isChecked = persistentState.getUdpBlocked()
+        b.firewallIcmpConnectionModeCheck.isChecked = persistentState.blockIcmp
         b.firewallUnknownConnectionModeCheck.isChecked =
             persistentState.getBlockUnknownConnections()
         b.firewallDisallowDnsBypassModeCheck.isChecked = persistentState.getDisallowDnsBypass()
@@ -139,6 +140,18 @@ class UniversalFirewallSettingsActivity :
 
         b.firewallUdpConnectionModeTxt.setOnClickListener {
             b.firewallUdpConnectionModeCheck.isChecked = !b.firewallUdpConnectionModeCheck.isChecked
+        }
+
+        b.firewallIcmpConnectionModeCheck.setOnCheckedChangeListener {
+            _: CompoundButton,
+            checked: Boolean ->
+            persistentState.blockIcmp = checked
+            logEvent("Univ firewall ICMP block toggled to $checked")
+        }
+
+        b.firewallIcmpConnectionModeTxt.setOnClickListener {
+            b.firewallIcmpConnectionModeCheck.isChecked =
+                !b.firewallIcmpConnectionModeCheck.isChecked
         }
 
         // Background mode toggle
@@ -272,6 +285,7 @@ class UniversalFirewallSettingsActivity :
         b.firewallAllAppsCheck.isChecked = persistentState.getBlockWhenDeviceLocked()
         b.firewallBackgroundModeCheck.isChecked = persistentState.getBlockAppWhenBackground()
         b.firewallUdpConnectionModeCheck.isChecked = persistentState.getUdpBlocked()
+        b.firewallIcmpConnectionModeCheck.isChecked = persistentState.blockIcmp
         b.firewallUnknownConnectionModeCheck.isChecked =
             persistentState.getBlockUnknownConnections()
         checkAppNotInUseRule()
