@@ -37,6 +37,9 @@
     <string name="lbl_logs" translatable="true">logs</string>
     <string name="lbl_network" translatable="true">network</string>
     <string name="lbl_create" translatable="true">Create</string>
+    <string name="lbl_download" translatable="true">Download</string>
+    <string name="wireguard_download_success" translatable="true">WireGuard config saved</string>
+    <string name="wireguard_download_failure" translatable="true">Failed to save WireGuard config</string>
     <string name="lbl_qr_code" translatable="true">QR Code</string>
     <string name="lbl_import" translatable="true">Import</string>
     <string name="lbl_wireguard" translatable="true">WireGuard</string>

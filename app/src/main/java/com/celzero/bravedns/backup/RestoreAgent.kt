@@ -36,6 +36,8 @@ import com.celzero.bravedns.backup.BackupHelper.Companion.stopVpn
 import com.celzero.bravedns.backup.BackupHelper.Companion.unzip
 import com.celzero.bravedns.database.AppDatabase
 import com.celzero.bravedns.database.LogDatabase
+import com.celzero.bravedns.database.WgConfigFilesRepository
+import com.celzero.bravedns.service.EncryptedFileManager
 import com.celzero.bravedns.service.PersistentState
 import com.celzero.bravedns.service.RethinkBlocklistManager
 import com.celzero.bravedns.util.Constants
@@ -85,6 +87,7 @@ class RestoreAgent(val context: Context, workerParams: WorkerParameters) :
     private val logDatabase by inject<LogDatabase>()
     private val appDatabase by inject<AppDatabase>()
     private val persistentState by inject<PersistentState>()
+    private val wgConfigFilesRepository by inject<WgConfigFilesRepository>()
 
     companion object {
         const val TAG = "RestoreAgent"
@@ -105,6 +108,10 @@ class RestoreAgent(val context: Context, workerParams: WorkerParameters) :
             // Bug fix: restart VPN after a successful restore so DNS resolves immediately;
             // previously stopVpn() was called at the start of restore but startVpn() was
             // never called on the success path, leaving the tunnel permanently down.
+            // Drop WireGuard rows whose encrypted config file is missing on disk.
+            // Restore does not carry over the wireguard/ directory, so any pre-existing
+            // rows without a matching file would surface as "invalid config" in the UI.
+            pruneOrphanWireguardConfigs()
             startVpn(context)
             Result.success()
         } else {
@@ -470,6 +477,29 @@ class RestoreAgent(val context: Context, workerParams: WorkerParameters) :
             return false
         } finally {
             deleteResidue(prefsBackupFile)
+        }
+    }
+
+    private suspend fun pruneOrphanWireguardConfigs() {
+        try {
+            val rows = wgConfigFilesRepository.getWgConfigs()
+            var pruned = 0
+            rows.forEach { row ->
+                val readable = try {
+                    EncryptedFileManager.readWireguardConfig(context, row.configPath) != null
+                } catch (e: Exception) {
+                    Logger.w(LOG_TAG_BACKUP_RESTORE, "prune: read failed id=${row.id} name=${row.name}: ${e.message}")
+                    false
+                }
+                if (!readable) {
+                    Logger.i(LOG_TAG_BACKUP_RESTORE, "prune: dropping orphan wg id=${row.id} name=${row.name}")
+                    wgConfigFilesRepository.deleteConfig(row.id)
+                    pruned++
+                }
+            }
+            Logger.i(LOG_TAG_BACKUP_RESTORE, "prune: removed $pruned orphan wg configs")
+        } catch (e: Exception) {
+            Logger.w(LOG_TAG_BACKUP_RESTORE, "prune: failed: ${e.message}")
         }
     }
 }

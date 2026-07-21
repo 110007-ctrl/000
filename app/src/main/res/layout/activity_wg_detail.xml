@@ -274,7 +274,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_marginEnd="5dp"
-                            android:layout_weight="0.5"
+                            android:layout_weight="0.33"
                             android:background="@drawable/rectangle_border_background"
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
@@ -284,12 +284,28 @@
                             android:textSize="@dimen/heading_font_text_view" />
 
                         <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/download_btn"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="0.34"
+                            android:background="@drawable/rectangle_border_background"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:padding="10dp"
+                            android:text="@string/lbl_download"
+                            android:textColor="?attr/primaryLightColorText"
+                            android:textSize="@dimen/heading_font_text_view" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
                             android:id="@+id/delete_btn"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_marginStart="5dp"
-                            android:layout_weight="0.5"
+                            android:layout_weight="0.33"
                             android:background="@drawable/rectangle_border_background"
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"

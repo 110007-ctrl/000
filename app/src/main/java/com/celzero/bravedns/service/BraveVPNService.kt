@@ -357,10 +357,10 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         private const val USQUE_DOZE_ALARM_INTERVAL_MS = 9 * 60 * 1000L
 
         // --- DNS transport health watchdog ---
-        // Poll interval for the DNS health watchdog (30 s).
-        private const val DNS_WATCHDOG_POLL_MS = 30_000L
+        // Poll interval for the DNS health watchdog (15 s).
+        private const val DNS_WATCHDOG_POLL_MS = 15_000L
         // Number of consecutive null-status polls before triggering a transport refresh.
-        // 3 × 30 s = 90 s of continuous DNS failure before auto-recovery kicks in.
+        // 3 × 15 s = 45 s of continuous DNS failure before auto-recovery kicks in.
         private const val DNS_WATCHDOG_FAIL_THRESHOLD = 3
         // Maximum back-off between recovery attempts (10 min).
         private const val DNS_WATCHDOG_MAX_BACKOFF_MS = 10 * 60_000L
