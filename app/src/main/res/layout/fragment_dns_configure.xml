@@ -126,7 +126,8 @@
                     android:layout_gravity="center"
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="10dp"
-                    android:layout_marginBottom="10dp">
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone">
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/smart_dns_rb"
