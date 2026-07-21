@@ -341,7 +341,7 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         // win last connected threshold in milliseconds
         private const val WIN_LAST_CONNECTED_THRESHOLD_MS = 60 * 60 * 1000L // 60 minutes
 
-        private const val DATA_STALL_THRESHOLD_MS = 30 * 1000L // 30 seconds
+        private const val DATA_STALL_THRESHOLD_MS = 15 * 1000L // 15 seconds
 
         // vpnRoutes are only used for diagnostics, the current implementation will taken
         // into account the vpn routes are handled properly, case: do not route private ips
@@ -357,10 +357,10 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         private const val USQUE_DOZE_ALARM_INTERVAL_MS = 9 * 60 * 1000L
 
         // --- DNS transport health watchdog ---
-        // Poll interval for the DNS health watchdog (30 s).
-        private const val DNS_WATCHDOG_POLL_MS = 30_000L
+        // Poll interval for the DNS health watchdog (15 s).
+        private const val DNS_WATCHDOG_POLL_MS = 15_000L
         // Number of consecutive null-status polls before triggering a transport refresh.
-        // 3 × 30 s = 90 s of continuous DNS failure before auto-recovery kicks in.
+        // 3 × 15 s = 45 s of continuous DNS failure before auto-recovery kicks in.
         private const val DNS_WATCHDOG_FAIL_THRESHOLD = 3
         // Maximum back-off between recovery attempts (10 min).
         private const val DNS_WATCHDOG_MAX_BACKOFF_MS = 10 * 60_000L
@@ -1007,10 +1007,13 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
     }
 
     private suspend fun waitAndCheckIfUidBlocked(uid: Int): Boolean {
-        val allowed = testWithBackoff {
-            FirewallManager.hasUid(uid) && !FirewallManager.isUidFirewalled(uid)
-        }
-        return !allowed
+        // Wait for the UID to be registered in FirewallManager's in-memory cache.
+        // The cache is populated asynchronously when an app connects for the first time.
+        val isRegistered = testWithBackoff { FirewallManager.hasUid(uid) }
+        // If UID is still unknown after the entire backoff window, default to ALLOW.
+        // No explicit firewall rule means no block — 0 rules should never block traffic.
+        if (!isRegistered) return false
+        return FirewallManager.isUidFirewalled(uid)
     }
 
     private suspend fun newAppBlocked(uid: Int): Boolean {

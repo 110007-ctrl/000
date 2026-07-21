@@ -1161,6 +1161,18 @@ object WireguardManager : KoinComponent {
         return configs.find { it.getId() == id }?.getPeers()?.toMutableList() ?: mutableListOf()
     }
 
+    /**
+     * Returns the WireGuard config for [id] serialized in wg-quick format, suitable for
+     * writing to a `.conf` file or sharing with the user.
+     *
+     * Returns `null` if no config with the given ID exists.
+     *
+     * Single-Responsibility: export/serialization logic is owned by the manager, not the UI.
+     */
+    fun exportConfigAsString(id: Int): String? {
+        return configs.find { it.getId() == id }?.toWgQuickString()
+    }
+
     suspend fun restoreProcessRetrieveWireGuardConfigs() {
         val count = db.getWgConfigs().size
         Logger.i(LOG_TAG_PROXY, "restored wg entries count: $count")

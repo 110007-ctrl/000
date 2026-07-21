@@ -40,6 +40,9 @@
     <string name="lbl_qr_code" translatable="true">QR Code</string>
     <string name="lbl_import" translatable="true">Import</string>
     <string name="lbl_wireguard" translatable="true">WireGuard</string>
+    <string name="wg_download_config" translatable="true">Download Config</string>
+    <string name="wg_export_error" translatable="true">Could not export WireGuard config.</string>
+    <string name="wg_export_success" translatable="true">Config saved.</string>
     <string name="lbl_public_key" translatable="true">Public Key</string>
     <string name="lbl_addresses" translatable="true">Addresses</string>
     <string name="lbl_dns_servers" translatable="true">DNS Servers</string>

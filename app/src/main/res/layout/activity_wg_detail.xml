@@ -582,21 +582,45 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- SAVE button -->
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/wg_config_save_btn"
+                    <!-- SAVE and DOWNLOAD CONFIG buttons -->
+                    <LinearLayout
+                        android:id="@+id/wg_config_actions_layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:background="@drawable/rectangle_border_background"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:padding="10dp"
-                        android:text="SAVE"
-                        android:textColor="?attr/accentGood"
-                        android:textSize="@dimen/heading_font_text_view"
+                        android:orientation="horizontal"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/wg_config_mtu_layout" />
+                        app:layout_constraintTop_toBottomOf="@id/wg_config_mtu_layout">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/wg_config_save_btn"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="4dp"
+                            android:background="@drawable/rectangle_border_background"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:padding="10dp"
+                            android:text="SAVE"
+                            android:textColor="?attr/accentGood"
+                            android:textSize="@dimen/heading_font_text_view" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/wg_config_download_btn"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="4dp"
+                            android:background="@drawable/rectangle_border_background"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:padding="10dp"
+                            android:text="@string/wg_download_config"
+                            android:textColor="?attr/primaryTextColor"
+                            android:textSize="@dimen/heading_font_text_view" />
+
+                    </LinearLayout>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 

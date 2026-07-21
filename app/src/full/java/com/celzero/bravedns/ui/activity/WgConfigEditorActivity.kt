@@ -18,9 +18,12 @@ package com.celzero.bravedns.ui.activity
 import Logger
 import Logger.LOG_TAG_PROXY
 import Logger.throwableToException
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
@@ -161,22 +164,25 @@ class WgConfigEditorActivity : AppCompatActivity(R.layout.activity_wg_config_edi
             val dnsServers = b.dnsServersText.text.toString().ifEmpty { DEFAULT_DNS }
             val privateKey = b.privateKeyText.text.toString()
             io {
-                val isInterfaceAdded =
+                val savedConfig =
                     addWgInterface(name, addresses, mtu, listenPort, dnsServers, privateKey)
-                if (isInterfaceAdded != null) {
+                if (savedConfig != null) {
                     uiCtx {
                         Utilities.showToastUiCentered(
                             this,
                             getString(R.string.config_add_success_toast),
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_SHORT
                         )
-                        finish()
+                        // Reveal the download button so users can export the new config
+                        // before leaving this screen.
+                        b.downloadTunnel.visibility = View.VISIBLE
                     }
-                } else {
-                    // no-op, addWgInterface() will show the error message
                 }
+                // On failure, addWgInterface() already shows the error toast — no-op here.
             }
         }
+
+        b.downloadTunnel.setOnClickListener { downloadConfig() }
 
         b.dismissBtn.setOnClickListener { finish() }
 
@@ -225,6 +231,37 @@ class WgConfigEditorActivity : AppCompatActivity(R.layout.activity_wg_config_edi
             Logger.e(LOG_TAG_PROXY, "err while parsing wg interface: $error", ex)
             uiCtx { Utilities.showToastUiCentered(this, error, Toast.LENGTH_LONG) }
             return null
+        }
+    }
+
+    /**
+     * Shares the currently saved WireGuard config as plain text via the system share sheet.
+     * Only callable after a successful save (download button is hidden before that).
+     *
+     * Single-Responsibility: serialization is handled by [WireguardManager.exportConfigAsString];
+     * this function only orchestrates the UI intent.
+     */
+    private fun downloadConfig() {
+        val id = wgConfig?.getId() ?: return
+        val configString = WireguardManager.exportConfigAsString(id) ?: run {
+            Utilities.showToastUiCentered(
+                this,
+                getString(R.string.wg_export_error),
+                Toast.LENGTH_SHORT
+            )
+            return
+        }
+        val configName = wgConfig?.getName() ?: "wireguard"
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, configString)
+            putExtra(Intent.EXTRA_SUBJECT, "$configName.conf")
+            putExtra(Intent.EXTRA_TITLE, "$configName.conf")
+        }
+        try {
+            startActivity(Intent.createChooser(sendIntent, getString(R.string.wg_download_config)))
+        } catch (e: ActivityNotFoundException) {
+            Utilities.showToastUiCentered(this, getString(R.string.wg_export_error), Toast.LENGTH_SHORT)
         }
     }
 

@@ -25,9 +25,11 @@ import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.celzero.bravedns.backup.BackupHelper.Companion.BACKUP_WG_DIR
 import com.celzero.bravedns.backup.BackupHelper.Companion.DATA_BUILDER_RESTORE_URI
 import com.celzero.bravedns.backup.BackupHelper.Companion.METADATA_FILENAME
 import com.celzero.bravedns.backup.BackupHelper.Companion.SHARED_PREFS_BACKUP_FILE_NAME
+import com.celzero.bravedns.backup.BackupHelper.Companion.TEMP_WG_DIR
 import com.celzero.bravedns.backup.BackupHelper.Companion.VERSION
 import com.celzero.bravedns.backup.BackupHelper.Companion.deleteResidue
 import com.celzero.bravedns.backup.BackupHelper.Companion.getTempDir
@@ -172,6 +174,10 @@ class RestoreAgent(val context: Context, workerParams: WorkerParameters) :
             // update app version after the restore process
             updateLatestVersion()
 
+            // Stage WireGuard plain-text configs for WireguardManager.performRestore().
+            // Must happen before deleteRecursive wipes the unzipped backup dir.
+            restoreWireGuardConfigs(tempDir)
+
             // clean up the temp directory
             deleteRecursive(tempDir)
 
@@ -275,6 +281,45 @@ class RestoreAgent(val context: Context, workerParams: WorkerParameters) :
         return true
     }
 
+
+    /**
+     * Moves WireGuard plain-text `.conf` files from the unzipped backup's `wireguard/`
+     * subdirectory to `filesDir/temp_wireguard/`, which is where
+     * [com.celzero.bravedns.service.WireguardManager.performRestore] looks for them.
+     *
+     * Follows the Single-Responsibility Principle: WG-specific restore staging is
+     * isolated here and does not interleave with database or shared-pref restore logic.
+     */
+    private fun restoreWireGuardConfigs(tempDir: File) {
+        val backedUpWgDir = File(tempDir, BACKUP_WG_DIR)
+        if (!backedUpWgDir.exists() || !backedUpWgDir.isDirectory) {
+            Logger.d(LOG_TAG_BACKUP_RESTORE, "no wg backup dir in archive; skipping wg restore")
+            return
+        }
+
+        val destWgDir = File(context.filesDir, TEMP_WG_DIR)
+        if (!destWgDir.exists() && !destWgDir.mkdirs()) {
+            Logger.w(LOG_TAG_BACKUP_RESTORE, "could not create temp_wireguard dir: ${destWgDir.absolutePath}")
+            return
+        }
+
+        val confFiles = backedUpWgDir.listFiles { f -> f.extension == "conf" }
+        if (confFiles.isNullOrEmpty()) {
+            Logger.d(LOG_TAG_BACKUP_RESTORE, "no wg conf files to stage for restore")
+            return
+        }
+
+        confFiles.forEach { src ->
+            try {
+                val dest = File(destWgDir, src.name)
+                src.copyTo(dest, overwrite = true)
+                Logger.i(LOG_TAG_BACKUP_RESTORE, "wg config staged: ${src.name} → ${dest.absolutePath}")
+            } catch (e: Exception) {
+                Logger.e(LOG_TAG_BACKUP_RESTORE, "failed to stage wg config '${src.name}': ${e.message}", e)
+                // Skip this config; continue staging the rest.
+            }
+        }
+    }
 
     private fun updateLatestVersion() {
         if (isNewVersion()) {

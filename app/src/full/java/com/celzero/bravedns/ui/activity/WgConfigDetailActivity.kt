@@ -17,6 +17,7 @@ package com.celzero.bravedns.ui.activity
 
 import Logger
 import Logger.LOG_TAG_PROXY
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -446,6 +447,41 @@ class WgConfigDetailActivity : AppCompatActivity(R.layout.activity_wg_detail) {
 
         b.wgConfigSaveBtn.setOnClickListener {
             saveConfigCard()
+        }
+
+        b.wgConfigDownloadBtn.setOnClickListener {
+            downloadConfig()
+        }
+    }
+
+    /**
+     * Exports the current WireGuard config as a plain-text `.conf` file and lets the user
+     * save or share it via the system share sheet.
+     *
+     * Single-Responsibility: the UI only orchestrates the user interaction;
+     * the serialization itself is delegated to [WireguardManager.exportConfigAsString].
+     */
+    private fun downloadConfig() {
+        val configString = WireguardManager.exportConfigAsString(configId)
+        if (configString == null) {
+            Utilities.showToastUiCentered(
+                this,
+                getString(R.string.wg_export_error),
+                Toast.LENGTH_SHORT
+            )
+            return
+        }
+        val configName = WireguardManager.getConfigName(configId)
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, configString)
+            putExtra(Intent.EXTRA_SUBJECT, "$configName.conf")
+            putExtra(Intent.EXTRA_TITLE, "$configName.conf")
+        }
+        try {
+            startActivity(Intent.createChooser(sendIntent, getString(R.string.wg_download_config)))
+        } catch (e: ActivityNotFoundException) {
+            Utilities.showToastUiCentered(this, getString(R.string.wg_export_error), Toast.LENGTH_SHORT)
         }
     }
 

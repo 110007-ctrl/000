@@ -25,6 +25,7 @@ import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.celzero.bravedns.backup.BackupHelper.Companion.BACKUP_WG_DIR
 import com.celzero.bravedns.backup.BackupHelper.Companion.CREATED_TIME
 import com.celzero.bravedns.backup.BackupHelper.Companion.DATA_BUILDER_BACKUP_URI
 import com.celzero.bravedns.backup.BackupHelper.Companion.METADATA_FILENAME
@@ -38,7 +39,9 @@ import com.celzero.bravedns.backup.BackupHelper.Companion.getRethinkDatabase
 import com.celzero.bravedns.backup.BackupHelper.Companion.getTempDir
 import com.celzero.bravedns.backup.BackupHelper.Companion.startVpn
 import com.celzero.bravedns.database.AppDatabase
+import com.celzero.bravedns.service.EncryptedFileManager
 import com.celzero.bravedns.service.PersistentState
+import com.celzero.bravedns.util.Constants.Companion.WIREGUARD_FOLDER_NAME
 import com.celzero.bravedns.util.Utilities
 import com.celzero.bravedns.util.Utilities.copyWithStream
 import org.koin.core.component.KoinComponent
@@ -159,6 +162,10 @@ class BackupAgent(val context: Context, workerParams: WorkerParameters) :
                 )
                 return false
             }
+
+            // WireGuard configs are backed up as plain text; any decryption failure
+            // is logged and skipped without aborting the whole backup.
+            saveWireGuardConfigsToFile(tempDir)
 
             processCompleted = createMetaData(tempDir)
 
@@ -304,6 +311,56 @@ class BackupAgent(val context: Context, workerParams: WorkerParameters) :
         return path + File.separator + fileName
     }
 
+    /**
+     * Exports WireGuard configs from their encrypted storage as plain-text `.conf` files
+     * placed in a `wireguard/` subdirectory inside [tempDir].
+     *
+     * Each file is named `{id}.conf` to match the naming scheme that
+     * [com.celzero.bravedns.service.WireguardManager.performRestore] expects when restoring.
+     *
+     * Follows the Single-Responsibility Principle: all WG export logic is isolated here.
+     * A per-config encryption failure is logged and skipped rather than aborting the backup.
+     */
+    private fun saveWireGuardConfigsToFile(tempDir: File) {
+        val wgSourceDir = File(
+            context.filesDir,
+            WIREGUARD_FOLDER_NAME
+        )
+        if (!wgSourceDir.exists() || !wgSourceDir.isDirectory) {
+            Logger.d(LOG_TAG_BACKUP_RESTORE, "no wg config dir found; skipping wg backup")
+            return
+        }
+
+        val confFiles = wgSourceDir.listFiles { f -> f.extension == "conf" }
+        if (confFiles.isNullOrEmpty()) {
+            Logger.d(LOG_TAG_BACKUP_RESTORE, "no wg config files to backup")
+            return
+        }
+
+        val backupWgDir = File(tempDir, BACKUP_WG_DIR)
+        if (!backupWgDir.exists() && !backupWgDir.mkdirs()) {
+            Logger.w(LOG_TAG_BACKUP_RESTORE, "could not create wg backup dir: ${backupWgDir.absolutePath}")
+            return
+        }
+
+        for (confFile in confFiles) {
+            try {
+                val plainTextBytes = EncryptedFileManager.readByteArray(context, confFile)
+                val destFile = File(backupWgDir, confFile.name)
+                destFile.writeBytes(plainTextBytes)
+                filesPathToZip.add(destFile.absolutePath)
+                Logger.i(LOG_TAG_BACKUP_RESTORE, "wg config backed up: ${confFile.name}")
+            } catch (e: Exception) {
+                Logger.e(
+                    LOG_TAG_BACKUP_RESTORE,
+                    "failed to backup wg config '${confFile.name}': ${e.message}",
+                    e
+                )
+                // Skip this config; continue backing up the rest.
+            }
+        }
+    }
+
     // SECURITY (VULN, Insecure Deserialization / CWE-502): The previous implementation
     // serialized SharedPreferences via java.io.ObjectOutputStream and the matching
     // restore path used java.io.ObjectInputStream on a user-supplied .rbk file. That is
@@ -398,7 +455,11 @@ class BackupAgent(val context: Context, workerParams: WorkerParameters) :
             ZipOutputStream(BufferedOutputStream(FileOutputStream(outputFileName))).use { out ->
                 for (file in files) {
                     BufferedInputStream(FileInputStream(file), bufferSize).use { origin ->
-                        out.putNextEntry(ZipEntry(getFileNameFromPath(file)))
+                        // Use relative path to preserve subdirectory structure (e.g. wireguard/1.conf).
+                        val entryName = runCatching {
+                            File(file).toRelativeString(File(zipDirectory))
+                        }.getOrElse { getFileNameFromPath(file) }
+                        out.putNextEntry(ZipEntry(entryName))
                         var count: Int
                         while (origin.read(data, 0, bufferSize).also { count = it } != -1) {
                             out.write(data, 0, count)
