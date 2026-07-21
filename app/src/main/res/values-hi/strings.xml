@@ -122,7 +122,7 @@
 \nरीथिंक कोई जानकारी इकट्ठा नही करता और ना आपकी जासूसी करता है।</string>
     <string name="brave_dns_connect_mode_change_dns" translatable="true">मोड चुनें।</string>
     <string name="brave_dns_connect_mode_change_firewall" translatable="true">मोड चुनें।</string>
-    <string name="default_dns_name" translatable="true">आरडीएनएस डिफ़ॉल्ट</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="custom_url_error_invalid_url" translatable="true">अमान्य यूआरएल</string>
     <string name="status_protected_with_proxy" translatable="true">प्रॉक्सी के साथ सुरक्षित</string>
     <string name="status_exposed" description="This is a large message in a scary color.  It indicates that DNS queries can be surveilled or modified in transit." translatable="true">सुरक्षित नहीं</string>

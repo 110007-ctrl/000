@@ -111,7 +111,7 @@
     <string name="alert_firewall_accessibility_exception" translatable="true">Nepodarilo sa otvoriť nastavenia dostupnosti. Skúste to znova neskôr!</string>
     <string name="brave_dns_connect_mode_change_firewall" translatable="true">Vyberte režim.</string>
     <string name="brave_dns_connect_mode_change_dns" translatable="true">Vyberte režim.</string>
-    <string name="default_dns_name" translatable="true">RDNS Predvolený</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="custom_url_error_invalid_url" translatable="true">Neplatná URL</string>
     <string name="conn_track_clear_logs_title" translatable="true">Odstrániť všetky záznamy siete?</string>
     <string name="conn_track_clear_logs_message" translatable="true">Týmto sa odstránia iba sieťové záznamy, ale nie pravidlá brány firewall. Táto operácia je nezvratná. Chcete pokračovať?</string>

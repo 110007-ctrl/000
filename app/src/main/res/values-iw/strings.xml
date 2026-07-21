@@ -243,7 +243,7 @@
     <string name="status_protected_with_http" translatable="true">מוגן באמצעות proxy http</string>
     <string name="status_protected_with_wg" translatable="true">מוגן באמצעות Wireguard</string>
     <string name="dns_mode_info_explanation_new" translatable="true">עקוב, לחסום ולהצפין בקשות DNS.</string>
-    <string name="default_dns_name" translatable="true">ברירת המחדל של RDNS</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="dns_query_clear_logs_title" translatable="true">למחוק את כל יומני ה- DNS?</string>
     <string name="lbl_disabled" translatable="true">מושבת</string>
     <string name="lbl_domain" translatable="true">דומיין</string>

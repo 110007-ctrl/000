@@ -219,7 +219,7 @@
     <string name="alert_firewall_accessibility_exception" translatable="true">Nu s-a putut deschide Setări- Accesibilitate. Încearcă din nou mai târziu!</string>
     <string name="brave_dns_connect_mode_change_firewall" translatable="true">Alege modul.</string>
     <string name="brave_dns_connect_mode_change_dns" translatable="true">Alege modul.</string>
-    <string name="default_dns_name" translatable="true">RDNS prestabilit</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="conn_track_clear_logs_title" translatable="true">Ștergi toate jurnalele de rețea?</string>
     <string name="conn_track_clear_logs_message" translatable="true">Vor fi eliminate toate jurnalele de rețea, dar nu și regulile Firewall-ului. Acțiunea este ireversibilă. Vrei să continui?</string>
     <string name="dns_query_clear_logs_title" translatable="true">Ștergi toate jurnalele DNS?</string>

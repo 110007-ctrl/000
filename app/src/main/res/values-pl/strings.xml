@@ -72,7 +72,7 @@
     <string name="alert_firewall_accessibility_exception">Błąd podczas otwierania ustawień ułatwień dostępu. Spróbuj ponownie później!</string>
     <string name="brave_dns_connect_mode_change_firewall">Wybierz Tryb.</string>
     <string name="brave_dns_connect_mode_change_dns">Wybierz Tryb.</string>
-    <string name="default_dns_name">RDNS Ustawienie Domyślne</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">Nieprawidłowy URL</string>
     <string name="conn_track_clear_logs_title">Usunąć wszystkie logi sieciowe\?</string>
     <string name="conn_track_clear_logs_message">Powoduje to usunięcie tylko dzienników sieciowych, ale nie reguł zapory sieciowej. Ta operacja nie jest odwracalna. Czy chcesz kontynuować\?</string>

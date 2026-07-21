@@ -85,7 +85,7 @@
     <string name="lbl_maybe_blocked" translatable="true">احتمالاً مسدود شده است</string>
     <string name="lbl_network" translatable="true">شبکه</string>
     <string name="isolate" translatable="true">منزوی</string>
-    <string name="default_dns_name" translatable="true">RDNS پیش فرض</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="dns_query_clear_logs_title" translatable="true">همه گزارش‌های DNS حذف شوند؟</string>
     <string name="bsct_app_info" translatable="true">اطلاعات برنامه</string>
     <string name="bsct_block_ip" translatable="true">مسدود کنید، به <u>این IP</u> برای <u>این برنامه</u> اعتماد کنید</string>

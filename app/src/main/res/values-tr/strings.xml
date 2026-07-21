@@ -311,7 +311,7 @@
     <string name="about_mozilla_alumni_link">https://builders.mozilla.community/alumni.html</string>
     <string name="brbs_restore_dialog_title">Yedeği geri yükle</string>
     <string name="dns_proxy_desc">%1$s:%2$s, %3$s</string>
-    <string name="default_dns_name">RDNS Varsayılan</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="dns_query_clear_logs_title">Tüm DNS kayıtları silinsin mi\?</string>
     <string name="always_on_dialog_stop_message">Rethink için her zaman açık VPN etkinleştirildi. Yine de Rethink\'i durdurmak istediğinizden emin misiniz\?</string>
     <string name="firewall_act_network_monitor_tab">Ağ</string>

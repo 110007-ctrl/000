@@ -339,7 +339,7 @@
     <string name="alert_firewall_accessibility_exception">Falha ao abrir as \"Configurações de Acessibilidade\". Tente mais tarde!</string>
     <string name="brave_dns_connect_mode_change_firewall">Escolha o modo.</string>
     <string name="brave_dns_connect_mode_change_dns">Escolha o modo.</string>
-    <string name="default_dns_name">RDNS Padrão</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="custom_url_error_invalid_url">URL inválida</string>
     <string name="conn_track_clear_logs_title">Excluir todos os registros de rede?</string>
     <string name="conn_track_clear_logs_message">Isso exclui apenas os registros de rede, mas não as regras de firewall. Esta operação não é reversível. Continuar?</string>

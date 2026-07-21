@@ -6,7 +6,7 @@
     <string name="alert_firewall_accessibility_regrant_explanation">توقفت خدمة إمكانية الوصول RethinkDNS أو تعطلت. <i> <b> انتقل إلى الإعدادات وفرض الإيقاف </b> </i> أعد التفكير في DNS وابدأ مرة أخرى لاستخدام <i> احظر أي تطبيق غير مستخدم </i>.
 \n
 \nيستخدم RethinkDNS خدمة إمكانية الوصول لتتبع التطبيقات قيد الاستخدام (المقدمة) مقابل التطبيقات غير المستخدمة (الخلفية).</string>
-    <string name="default_dns_name">RDNS المبدئي</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="about_settings_vpn_profile">ملف تعريف VPN</string>
     <string name="dns_proxy_dialog_message">اسم التطبيق: %1$s
 \n

@@ -82,7 +82,7 @@
     <string name="isolate" translatable="true">격리</string>
     <string name="lbl_dns_servers" translatable="true">DNS 서버</string>
     <string name="slide_2_desc" translatable="true">Rethink는 안드로이드 기기에서 네트워크 활동을 모니터링하고, 인터넷 검열을 우회하고, 방화벽으로 앱을 보호하는 가장 쉬운 방법입니다.</string>
-    <string name="default_dns_name" translatable="true">RDNS 기본</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="bypass_universal" translatable="true">전역 우회</string>
     <string name="lbl_app_wise" translatable="true">앱별</string>
     <string name="status_app_error" translatable="true">앱 오류</string>

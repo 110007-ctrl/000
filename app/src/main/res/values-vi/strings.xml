@@ -52,7 +52,7 @@
     <string name="alert_firewall_accessibility_exception" translatable="true">Không thể mở Cài đặt trợ năng. Thử lại sau!</string>
     <string name="brave_dns_connect_mode_change_firewall" translatable="true">Chọn chế độ.</string>
     <string name="brave_dns_connect_mode_change_dns" translatable="true">Chọn Chế độ.</string>
-    <string name="default_dns_name" translatable="true">RDNS Mặc định</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="custom_url_error_invalid_url" translatable="true">URL không hợp lệ</string>
     <string name="conn_track_clear_logs_title" translatable="true">Xóa tất cả nhật ký mạng\?</string>
     <string name="ssv_see_more" translatable="true">Hiển thị tất cả</string>

@@ -334,7 +334,7 @@
     <string name="local_blocklist_download" translatable="true">Завантажити списки блокування</string>
     <string name="bsct_conn_block_desc" translatable="true">заблоковано %1$s за адресою %2$s</string>
     <string name="lbl_network" translatable="true">мережа</string>
-    <string name="default_dns_name" translatable="true">RDNS за замовчуванням</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="dns_query_clear_logs_title" translatable="true">Видалити всі журнали DNS\?</string>
     <string name="always_on_dialog_stop_message" translatable="true">У Rethink ввімкнено постійний доступ до VPN. Ви дійсно хочете зупинити Rethink\?</string>
     <string name="private_dns_dialog_positive" translatable="true">Перейти до Налаштувань</string>

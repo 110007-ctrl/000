@@ -171,7 +171,7 @@
     <string name="lbl_domain_rules" translatable="true">Правила на домейна</string>
     <string name="lbl_delete" translatable="true">Изтрий</string>
     <string name="lbl_fast" translatable="true">бързо</string>
-    <string name="default_dns_name" translatable="true">RDNS по подразбиране</string>
+    <string name="default_dns_name" translatable="true">Cloudflare</string>
     <string name="dns_query_clear_logs_title" translatable="true">Изтриване на всички логове на DNS?</string>
     <string name="dns_query_clear_logs_message" translatable="true">По този начин се изтриват DNS дневниците на устройството. Тази операция не може да бъде върната. Искате ли да продължите?</string>
     <string name="bsct_conn_desc_allowed" translatable="true">разрешено на %1$s %2$s</string>

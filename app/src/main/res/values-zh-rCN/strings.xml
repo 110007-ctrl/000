@@ -15,7 +15,7 @@
     <string name="coming_soon_toast">即将推出</string>
     <string name="pause_text">已暂停</string>
     <string name="pause_desc">注意： %1$s 个已拦截的应用将会继续被拦截。</string>
-    <string name="default_dns_name">RDNS 默认</string>
+    <string name="default_dns_name">Cloudflare</string>
     <string name="settings_socks5_disabled_error">已连接至 %1$s 。请先将其关闭。</string>
     <string name="ada_ip_connection_count_zero">0 个 IP 地址</string>
     <string name="univ_firewall_rule_8">拦截端口 80 （不安全 HTTP ）的流量</string>
