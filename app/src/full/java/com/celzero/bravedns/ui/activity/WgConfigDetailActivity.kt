@@ -89,6 +89,7 @@ class WgConfigDetailActivity : AppCompatActivity(R.layout.activity_wg_detail) {
     private var wgInterface: WgInterface? = null
     private val peers: MutableList<Peer> = mutableListOf()
     private var wgType: WgType = WgType.DEFAULT
+    private var triedConfigRefresh: Boolean = false
 
     companion object {
         private const val CLIPBOARD_PUBLIC_KEY_LBL = "Public Key"
@@ -187,7 +188,21 @@ class WgConfigDetailActivity : AppCompatActivity(R.layout.activity_wg_detail) {
         val mapping = WireguardManager.getConfigFilesById(configId)
 
         if (config == null) {
-            showInvalidConfigDialog()
+            // Configs may not yet be loaded (e.g. cold-start race, or immediately
+            // after import). Try refreshing once before declaring the config invalid.
+            if (!triedConfigRefresh) {
+                triedConfigRefresh = true
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) { WireguardManager.load(forceRefresh = true) }
+                    if (WireguardManager.getConfigById(configId) != null) {
+                        init()
+                    } else {
+                        showInvalidConfigDialog()
+                    }
+                }
+            } else {
+                showInvalidConfigDialog()
+            }
             return
         }
 
