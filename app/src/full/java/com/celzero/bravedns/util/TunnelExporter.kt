@@ -37,7 +37,7 @@ object TunnelExporter {
                 ?: error("cannot open output stream for $uri")
             out.use { OutputStreamWriter(it, Charsets.UTF_8).use { w -> w.write(config.toWgQuickString()) } }
             Logger.i(LOG_TAG_PROXY, "exportConfig: wrote ${config.getName()} to $uri")
-        }.onFailure { Logger.e(LOG_TAG_PROXY, "exportConfig: failed: ${it.message}", it) }
+        }.onFailure { Logger.e(LOG_TAG_PROXY, "exportConfig: failed: ${it.message}", it as? Exception) }
     }
 
     /** Write all supplied configs to [uri] as a .zip of `<name>.conf` entries. */
@@ -64,6 +64,6 @@ object TunnelExporter {
             }
             Logger.i(LOG_TAG_PROXY, "exportConfigsZip: wrote $count configs to $uri")
             count
-        }.onFailure { Logger.e(LOG_TAG_PROXY, "exportConfigsZip: failed: ${it.message}", it) }
+        }.onFailure { Logger.e(LOG_TAG_PROXY, "exportConfigsZip: failed: ${it.message}", it as? Exception) }
     }
 }
