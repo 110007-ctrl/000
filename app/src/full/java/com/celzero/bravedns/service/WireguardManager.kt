@@ -145,6 +145,32 @@ object WireguardManager : KoinComponent {
         }
     }
 
+    /**
+     * Prunes any WireGuard config entries whose underlying encrypted config file
+     * is missing on disk (e.g. after restoring an .rbk backup that does not
+     * include the wireguard folder). This prevents ghost "invalid config" rows
+     * from being surfaced in the UI. Safe to call repeatedly.
+     */
+    suspend fun pruneOrphanConfigs(): Int {
+        val snapshot = mappings.toList()
+        var pruned = 0
+        snapshot.forEach { m ->
+            val cfg = try {
+                EncryptedFileManager.readWireguardConfig(applicationContext, m.configPath)
+            } catch (e: Exception) {
+                Logger.w(LOG_TAG_PROXY, "pruneOrphan: read failed for ${m.id} (${m.name}): ${e.message}")
+                null
+            }
+            if (cfg == null) {
+                Logger.i(LOG_TAG_PROXY, "pruneOrphan: dropping orphan wg config id=${m.id} name=${m.name}")
+                deleteConfig(m.id)
+                pruned++
+            }
+        }
+        if (pruned > 0) load(forceRefresh = true)
+        return pruned
+    }
+
     private fun clearLoadedConfigs() {
         configs.clear()
         mappings.clear()
@@ -172,6 +198,10 @@ object WireguardManager : KoinComponent {
 
     fun isAdvancedWgActive(): Boolean {
         return mappings.any { it.isActive && !it.oneWireGuard }
+    }
+
+    fun getAllConfigs(): List<Config> {
+        return configs.toList()
     }
 
     fun getAllMappings(): List<WgConfigFilesImmutable> {

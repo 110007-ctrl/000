@@ -52,6 +52,8 @@ import com.celzero.bravedns.ui.activity.NetworkLogsActivity.Companion.RULES_SEAR
 import com.celzero.bravedns.ui.dialog.WgAddPeerDialog
 import com.celzero.bravedns.ui.dialog.WgIncludeAppsDialog
 import com.celzero.bravedns.util.Constants
+import com.celzero.bravedns.util.TunnelExporter
+import androidx.activity.result.contract.ActivityResultContracts
 import com.celzero.bravedns.util.Themes
 import com.celzero.bravedns.util.UIUtils
 import com.celzero.bravedns.util.UIUtils.fetchColor
@@ -109,7 +111,22 @@ class WgConfigDetailActivity : AppCompatActivity(R.layout.activity_wg_detail) {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private val downloadConfigLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            val cfg = WireguardManager.getConfigById(configId)
+            if (cfg == null) {
+                Utilities.showToastUiCentered(this, getString(R.string.wireguard_download_failure), Toast.LENGTH_LONG)
+                return@registerForActivityResult
+            }
+            lifecycleScope.launch {
+                val result = TunnelExporter.exportConfig(contentResolver, uri, cfg)
+                val msg = if (result.isSuccess) R.string.wireguard_download_success else R.string.wireguard_download_failure
+                Utilities.showToastUiCentered(this@WgConfigDetailActivity, getString(msg), Toast.LENGTH_LONG)
+            }
+        }
+
+        override fun onCreate(savedInstanceState: Bundle?) {
         theme.applyStyle(Themes.getCurrentTheme(isDarkThemeOn(), persistentState.theme), true)
         super.onCreate(savedInstanceState)
 
@@ -406,6 +423,16 @@ class WgConfigDetailActivity : AppCompatActivity(R.layout.activity_wg_detail) {
         b.applicationsBtn.setOnClickListener {
             val proxyName = WireguardManager.getConfigName(configId)
             openAppsDialog(proxyName)
+        }
+
+        b.downloadBtn.setOnClickListener {
+            val name = WireguardManager.getConfigName(configId).ifBlank { "wg-$configId" }
+            try {
+                downloadConfigLauncher.launch("$name.conf")
+            } catch (e: Exception) {
+                Logger.e(LOG_TAG_PROXY, "download wg config failed: ${e.message}", e)
+                Utilities.showToastUiCentered(this, getString(R.string.wireguard_download_failure), Toast.LENGTH_LONG)
+            }
         }
 
         b.deleteBtn.setOnClickListener { showDeleteInterfaceDialog() }

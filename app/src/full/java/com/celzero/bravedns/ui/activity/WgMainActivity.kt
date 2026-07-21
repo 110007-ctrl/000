@@ -46,6 +46,7 @@ import com.celzero.bravedns.service.PersistentState
 import com.celzero.bravedns.service.WireguardManager
 import com.celzero.bravedns.util.QrCodeFromFileScanner
 import com.celzero.bravedns.util.Themes
+import com.celzero.bravedns.util.TunnelExporter
 import com.celzero.bravedns.util.TunnelImporter
 import com.celzero.bravedns.util.UIUtils
 import com.celzero.bravedns.util.UIUtils.fetchToggleBtnColors
@@ -160,7 +161,23 @@ class WgMainActivity :
             }
         }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private val downloadConfigsLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            lifecycleScope.launch {
+                val configs = WireguardManager.getAllConfigs()
+                if (configs.isEmpty()) {
+                    Utilities.showToastUiCentered(this@WgMainActivity, getString(R.string.wireguard_download_failure), Toast.LENGTH_LONG)
+                    return@launch
+                }
+                val result = TunnelExporter.exportConfigsZip(contentResolver, uri, configs)
+                val msg = if (result.isSuccess) R.string.wireguard_download_success else R.string.wireguard_download_failure
+                Utilities.showToastUiCentered(this@WgMainActivity, getString(msg), Toast.LENGTH_LONG)
+                logEvent("Wireguard export", "exported ${result.getOrDefault(0)} configs to zip")
+            }
+        }
+
+        override fun onCreate(savedInstanceState: Bundle?) {
         theme.applyStyle(Themes.getCurrentTheme(isDarkThemeOn(), persistentState.theme), true)
         super.onCreate(savedInstanceState)
 
@@ -365,6 +382,15 @@ class WgMainActivity :
                 Utilities.showToastUiCentered(this, getString(R.string.blocklist_update_check_failure), Toast.LENGTH_SHORT)
             }
         }
+        b.downloadFab.setOnClickListener {
+            try {
+                val fileName = "wireguard-configs-${System.currentTimeMillis()}.zip"
+                downloadConfigsLauncher.launch(fileName)
+            } catch (e: Exception) {
+                Logger.e(LOG_TAG_PROXY, "download wg zip failed: ${e.message}", e)
+                Utilities.showToastUiCentered(this, getString(R.string.wireguard_download_failure), Toast.LENGTH_SHORT)
+            }
+        }
         b.createFab.setOnClickListener { openTunnelEditorActivity() }
 
         b.wgGeneralToggleBtn.setOnClickListener {
@@ -446,18 +472,22 @@ class WgMainActivity :
         b.createFab.visibility = View.VISIBLE
         b.importFab.visibility = View.VISIBLE
         b.qrCodeFab.visibility = View.VISIBLE
+        b.downloadFab.visibility = View.VISIBLE
         b.createFab.animate().translationY(-resources.getDimension(R.dimen.standard_55))
         b.importFab.animate().translationY(-resources.getDimension(R.dimen.standard_105))
         b.qrCodeFab.animate().translationY(-resources.getDimension(R.dimen.standard_155))
+        b.downloadFab.animate().translationY(-resources.getDimension(R.dimen.standard_205))
     }
 
     private fun collapseFab() {
         b.createFab.animate().translationY(resources.getDimension(R.dimen.standard_0))
         b.importFab.animate().translationY(resources.getDimension(R.dimen.standard_0))
         b.qrCodeFab.animate().translationY(resources.getDimension(R.dimen.standard_0))
+        b.downloadFab.animate().translationY(resources.getDimension(R.dimen.standard_0))
         b.createFab.visibility = View.GONE
         b.importFab.visibility = View.GONE
         b.qrCodeFab.visibility = View.GONE
+        b.downloadFab.visibility = View.GONE
     }
 
     private fun logEvent(msg: String, details: String) {

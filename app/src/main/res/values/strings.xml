@@ -37,6 +37,9 @@
     <string name="lbl_logs" translatable="true">logs</string>
     <string name="lbl_network" translatable="true">network</string>
     <string name="lbl_create" translatable="true">Create</string>
+    <string name="lbl_download" translatable="true">Download</string>
+    <string name="wireguard_download_success" translatable="true">WireGuard config saved</string>
+    <string name="wireguard_download_failure" translatable="true">Failed to save WireGuard config</string>
     <string name="lbl_qr_code" translatable="true">QR Code</string>
     <string name="lbl_import" translatable="true">Import</string>
     <string name="lbl_wireguard" translatable="true">WireGuard</string>
@@ -1054,6 +1057,8 @@
     <string name="univ_firewall_rule_2" translatable="true">Block any app not in use</string>
     <string name="univ_firewall_rule_3" translatable="true">Block when source app is unknown</string>
     <string name="univ_firewall_rule_4" translatable="true">Block UDP except DNS and NTP</string>
+    <string name="univ_firewall_rule_icmp" translatable="true">Block ICMP (ping)</string>
+    <string name="univ_firewall_rule_icmp_desc" translatable="true">Drops ICMP echo (ping) and ICMPv6 through the tunnel. Enabled by default to prevent apps from using ICMP as a covert channel. Disable if you need ping/traceroute to work.</string>
     <string name="univ_firewall_rule_5" translatable="true">Block when DNS is bypassed</string>
     <string name="univ_firewall_rule_6" translatable="true">Block newly installed apps by default</string>
     <string name="univ_firewall_rule_7" translatable="true">Block IPv4 in IPv6 (experimental)</string>
