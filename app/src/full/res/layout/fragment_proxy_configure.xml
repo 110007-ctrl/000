@@ -396,7 +396,7 @@
               <!-- Read-only echo of the fully-substituted argv that will
                    be passed to libusque.so on next start. Updates after
                    Save / Reset / Reload so advanced users can verify their
-                   edits actually landed (e.g. that `--ipv6` is present). -->
+                   edits actually landed (e.g. that the ipv6 flag is present). -->
               <TextView
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
