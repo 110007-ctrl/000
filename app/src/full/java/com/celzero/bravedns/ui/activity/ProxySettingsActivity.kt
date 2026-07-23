@@ -38,6 +38,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.celzero.bravedns.R
@@ -73,6 +74,7 @@ import com.celzero.firestack.backend.Backend
 import com.celzero.firestack.backend.RouterStats
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
@@ -99,6 +101,10 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
         // Reserved ID for the WARP SOCKS5 proxy row. Negative so Room's auto-increment
         // (which starts at 1) never collides with the user's custom proxy entries.
         private const val WARP_PROXY_ID = -1
+        // How long to wait, and how often to re-poll, for UsqueManager.isRunning() to settle
+        // after enabling WARP before trusting it in updateWarpUi() (see the io{} block below).
+        private const val WARP_SETTLE_TIMEOUT_MS = 3000L
+        private const val WARP_SETTLE_POLL_MS = 200L
     }
 
     private fun Context.isDarkThemeOn(): Boolean {
@@ -288,6 +294,62 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
             restartWarpForSniChange("WARP restarted with default SNI")
         }
 
+        // config.json editor: Reload pulls the current file from disk;
+        // Save validates the payload and atomically overwrites, then live-
+        // restarts WARP if it's already running so the new config takes
+        // effect without the user toggling the switch.
+        b.settingsActivityWarpConfigReloadBtn.setOnClickListener {
+            loadWarpConfigIntoEditor()
+            showToastUiCentered(this, "config.json reloaded", Toast.LENGTH_SHORT)
+        }
+
+        b.settingsActivityWarpConfigSaveBtn.setOnClickListener {
+            val text = b.settingsActivityWarpConfigEdit.text?.toString().orEmpty()
+            if (text.isBlank()) {
+                showToastUiCentered(this, "config.json is empty", Toast.LENGTH_SHORT)
+                return@setOnClickListener
+            }
+            val ok = UsqueManager.writeConfig(this, text)
+            if (!ok) {
+                showToastUiCentered(this, "Invalid config.json — not saved", Toast.LENGTH_LONG)
+                return@setOnClickListener
+            }
+            showToastUiCentered(this, "config.json saved", Toast.LENGTH_SHORT)
+            restartWarpForSniChange("WARP restarted with new config")
+        }
+
+        // libusque.so args editor: Reload pulls the currently-effective arg
+        // string (override or default template); Reset clears the override
+        // so the default template is used again; Save validates and stores
+        // the override then live-restarts WARP if it is running.
+        b.settingsActivityWarpArgsReloadBtn.setOnClickListener {
+            loadWarpArgsIntoEditor()
+            showToastUiCentered(this, "arguments reloaded", Toast.LENGTH_SHORT)
+        }
+
+        b.settingsActivityWarpArgsResetBtn.setOnClickListener {
+            UsqueManager.writeSocksArgs(this, "")
+            loadWarpArgsIntoEditor()
+            showToastUiCentered(this, "arguments reset to default", Toast.LENGTH_SHORT)
+            restartWarpForSniChange("WARP restarted with default arguments")
+        }
+
+        b.settingsActivityWarpArgsSaveBtn.setOnClickListener {
+            val text = b.settingsActivityWarpArgsEdit.text?.toString().orEmpty()
+            val ok = UsqueManager.writeSocksArgs(this, text)
+            if (!ok) {
+                showToastUiCentered(
+                    this,
+                    "Invalid arguments — must include {config}",
+                    Toast.LENGTH_LONG
+                )
+                return@setOnClickListener
+            }
+            loadWarpArgsIntoEditor()
+            showToastUiCentered(this, "arguments saved", Toast.LENGTH_SHORT)
+            restartWarpForSniChange("WARP restarted with new arguments")
+        }
+
         // Switch listener is attached (and re-attached safely) in updateWarpUi()
         // ===== END WARP SECTION =====
         b.settingsActivityWireguardContainer.setOnClickListener { openWireguardActivity() }
@@ -412,13 +474,53 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
         b.settingsActivityWarpRegisterBtn.visibility =
             if (isRegistered) View.GONE else View.VISIBLE
 
+        // config.json editor row: only meaningful once registered (a config
+        // file exists on disk). Populate the field the first time the row
+        // becomes visible so we don't clobber in-progress edits on refresh.
+        val wasConfigRowVisible = b.settingsActivityWarpConfigRow.isVisible
+        b.settingsActivityWarpConfigRow.visibility =
+            if (isRegistered) View.VISIBLE else View.GONE
+        if (isRegistered && (!wasConfigRowVisible ||
+                b.settingsActivityWarpConfigEdit.text.isNullOrEmpty())) {
+            loadWarpConfigIntoEditor()
+        }
+
+        // Args editor: shown once registered. Populate the field on first
+        // reveal or when it is empty so we do not clobber in-progress edits.
+        val wasArgsRowVisible = b.settingsActivityWarpArgsRow.isVisible
+        b.settingsActivityWarpArgsRow.visibility =
+            if (isRegistered) View.VISIBLE else View.GONE
+        if (isRegistered && (!wasArgsRowVisible ||
+                b.settingsActivityWarpArgsEdit.text.isNullOrEmpty())) {
+            loadWarpArgsIntoEditor()
+        }
+
         // Switch row: only shown when registered
+        val wasSwitchRowVisible = b.settingsActivityWarpSwitchRow.isVisible
         b.settingsActivityWarpSwitchRow.visibility =
             if (isRegistered) View.VISIBLE else View.GONE
 
         // Update switch state without triggering the listener
         b.settingsActivityWarpSwitch.setOnCheckedChangeListener(null)
         b.settingsActivityWarpSwitch.isChecked = isConnected
+        // Bug (original): on the very first enable, the ON/OFF slide animation didn't play.
+        // Root cause: settingsActivityWarpSwitchRow starts as View.GONE (fragment_proxy_configure.xml),
+        // so the switch's drawable never gets a real draw pass until the row first becomes
+        // VISIBLE. Forcing a drawable sync right at that GONE -> VISIBLE transition fixed it.
+        //
+        // Bug (regression this introduced): ProxySettingsActivity is a real Activity, so every
+        // time the user leaves and comes back, a brand-new instance is created and the switch
+        // row is GONE by default again - this branch then fires on every single re-entry, not
+        // just the true first-ever registration. Calling jumpDrawablesToCurrentState()
+        // synchronously, in the same frame isChecked was just set, could freeze the switch on a
+        // stale pre-change (OFF) drawable frame before that state change had actually been laid
+        // out/drawn - so it displayed OFF even though isChecked and the real WARP connection
+        // were both genuinely ON. Deferring the jump to the next frame (post{}), after the
+        // checked-state change and the row's own layout pass have settled, fixes that: it syncs
+        // to the state that's actually on screen instead of the one mid-transition.
+        if (isRegistered && !wasSwitchRowVisible) {
+            b.settingsActivityWarpSwitch.post { b.settingsActivityWarpSwitch.jumpDrawablesToCurrentState() }
+        }
         b.settingsActivityWarpSwitch.isEnabled = true
         b.settingsActivityWarpSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -427,7 +529,11 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
                     showWarpRegistrationDialog()
                     return@setOnCheckedChangeListener
                 }
-                b.settingsActivityWarpSwitch.isEnabled = false
+                // Defer disabling the switch to the next frame instead of doing it inline in
+                // the listener. Disabling it synchronously here forces an immediate
+                // disabled-state redraw that cuts off the native checked-state slide animation
+                // mid-flight, which is the other half of the "animation doesn't play" symptom.
+                b.settingsActivityWarpSwitch.post { b.settingsActivityWarpSwitch.isEnabled = false }
                 val warpProxyName = getString(R.string.warp_tunnel_title)
                 isWarpStarting = true
                 io {
@@ -455,6 +561,19 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
                             latency = 0
                         )
                         appConfig.updateCustomSocks5Proxy(warpProxy)
+                        // Bug: on the very first enable, the switch flipped back to OFF even
+                        // though WARP genuinely connected a moment later - it also stayed wrong
+                        // until a second tap re-checked it. updateCustomSocks5Proxy() can trigger
+                        // BraveVPNService to rebuild the tunnel around the new proxy, which can
+                        // briefly cycle the usque process before things settle. Calling
+                        // updateWarpUi() immediately could land in that gap and read
+                        // isRunning()=false, then nothing re-checked it afterwards. Give it a
+                        // short window to settle and re-confirm before trusting it in the UI.
+                        var waitedMs = 0L
+                        while (!UsqueManager.isRunning() && waitedMs < WARP_SETTLE_TIMEOUT_MS) {
+                            delay(WARP_SETTLE_POLL_MS)
+                            waitedMs += WARP_SETTLE_POLL_MS
+                        }
                     }
                     uiCtx {
                         isWarpStarting = false
@@ -505,6 +624,26 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
             }
         }
     }
+
+    /** Reads config.json off disk and puts its raw text into the editor. */
+    private fun loadWarpConfigIntoEditor() {
+        val text = UsqueManager.readConfig(this)
+        b.settingsActivityWarpConfigEdit.setText(text)
+    }
+
+    /** Pulls the currently-effective libusque.so arg string (user override
+     *  if saved, otherwise the default template with {config}/{sni} tokens
+     *  intact) and puts it into the editor. Also refreshes the read-only
+     *  "effective args" line beneath the editor so advanced users can see
+     *  the fully-substituted argv that will be handed to libusque on the
+     *  next start. */
+    private fun loadWarpArgsIntoEditor() {
+        val text = UsqueManager.currentSocksArgsForEditor()
+        b.settingsActivityWarpArgsEdit.setText(text)
+        b.settingsActivityWarpArgsEffective.text =
+            UsqueManager.effectiveSocksArgsForDisplay(this)
+    }
+
 
     // ===== END WARP METHODS =====
 
