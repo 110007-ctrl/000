@@ -53,6 +53,102 @@ object UsqueManager {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
+    // ── libusque.so arguments (user-editable) ────────────────────────────────
+    // The Proxy settings screen exposes the exact argument string passed to
+    // libusque.so and lets advanced users edit it. Two placeholders are
+    // substituted at process-start time:
+    //   {config} → absolute path of the on-disk config.json
+    //   {sni}    → current warpSpoofedSni value (may be empty)
+    // The default template mirrors the historical hard-coded arg list so
+    // existing installs behave identically until the user opts in.
+    const val DEFAULT_SOCKS_ARGS_TEMPLATE =
+        "socks -b $SOCKS_HOST -p $SOCKS_PORT -c {config}"
+
+    /** Returns the default arg string (with {sni} appended when SNI is set). */
+    fun defaultSocksArgsTemplate(sni: String): String {
+        val base = DEFAULT_SOCKS_ARGS_TEMPLATE
+        return if (sni.isNotBlank()) "$base -s {sni}" else base
+    }
+
+    /** Returns the args string currently shown in the UI editor: the user
+     *  override if one is saved, otherwise the default template rendered
+     *  against the current SNI value. Placeholders are preserved. */
+    fun currentSocksArgsForEditor(): String {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (_: Throwable) { null }
+        val override = ps?.warpUsqueArgs?.trim().orEmpty()
+        if (override.isNotEmpty()) return override
+        val sni = ps?.warpSpoofedSni?.trim().orEmpty()
+        return defaultSocksArgsTemplate(sni)
+    }
+
+    /** Resolves the final argv (excluding the binary path) that will be
+     *  handed to ProcessBuilder. Handles {config}/{sni} substitution and
+     *  splits on whitespace. Falls back to the default template if the
+     *  saved override is blank or parses to an empty list. */
+    fun buildSocksArgs(ctx: Context, configPath: String): List<String> {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (t: Throwable) {
+            dlog(ctx, "buildSocksArgs: PersistentState lookup failed: ${t.message}")
+            null
+        }
+        val sni = ps?.warpSpoofedSni?.trim().orEmpty()
+        val override = ps?.warpUsqueArgs?.trim().orEmpty()
+        val template = if (override.isNotEmpty()) override
+                       else defaultSocksArgsTemplate(sni)
+        val rendered = template
+            .replace("{config}", configPath)
+            .replace("{sni}", sni)
+        // Whitespace split — usque args do not contain spaces in practice.
+        val parts = rendered.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        if (parts.isEmpty()) {
+            dlog(ctx, "buildSocksArgs: override parsed to empty — using default")
+            return defaultSocksArgsTemplate(sni)
+                .replace("{config}", configPath)
+                .replace("{sni}", sni)
+                .split(Regex("\\s+")).filter { it.isNotEmpty() }
+        }
+        return parts
+    }
+
+    /** Validates and saves the user override string. Empty/blank clears
+     *  the override so the default template takes over again. Returns
+     *  true on success. */
+    fun writeSocksArgs(ctx: Context, text: String): Boolean {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (t: Throwable) {
+            dlog(ctx, "writeSocksArgs: PersistentState lookup failed: ${t.message}")
+            return false
+        }
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) {
+            ps.warpUsqueArgs = ""
+            dlog(ctx, "writeSocksArgs: cleared override (default will be used)")
+            return true
+        }
+        // Must contain {config} so the config.json path always reaches usque.
+        if (!trimmed.contains("{config}")) {
+            dlog(ctx, "writeSocksArgs: refused — missing {config} placeholder")
+            return false
+        }
+        // Non-empty tokens after split.
+        val parts = trimmed.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        if (parts.isEmpty()) {
+            dlog(ctx, "writeSocksArgs: refused — no argument tokens")
+            return false
+        }
+        ps.warpUsqueArgs = trimmed
+        dlog(ctx, "writeSocksArgs: saved override (${trimmed.length} chars)")
+        return true
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     private fun getBinary(ctx: Context): File {
         val nativeDir = ctx.applicationInfo.nativeLibraryDir
         val bin = File(nativeDir, BINARY_NAME)
@@ -255,25 +351,13 @@ object UsqueManager {
             val configFile = File(ctx.filesDir, "config.json")
             dlog(ctx, "startSocksProxy: configExists=${configFile.exists()} size=${configFile.length()}")
 
-            // Apply user-configured SNI override (defaults to "cloudflare.com").
-            // Read at process-start time so the user's saved value is used for every restart.
-            val sni = try {
-                org.koin.java.KoinJavaComponent
-                    .get<PersistentState>(PersistentState::class.java)
-                    .warpSpoofedSni.trim()
-            } catch (t: Throwable) {
-                dlog(ctx, "startSocksProxy: SNI lookup failed: ${t.message}")
-                ""
-            }
-            val cmd = mutableListOf(
-                bin.absolutePath, "socks",
-                "-b", SOCKS_HOST,
-                "-p", SOCKS_PORT.toString(),
-                "-c", configFile.absolutePath
-            )
-            if (sni.isNotEmpty()) {
-                cmd += listOf("-s", sni)
-            }
+            // Build argument list. If the user saved a custom override string
+            // (Proxy settings > WARP > "libusque.so arguments"), it is used
+            // verbatim after {config}/{sni} substitution; otherwise fall back
+            // to the default template derived from warpSpoofedSni.
+            val args = buildSocksArgs(ctx, configFile.absolutePath)
+            val cmd = mutableListOf(bin.absolutePath)
+            cmd += args
             dlog(ctx, "startSocksProxy: cmd=${cmd.joinToString(" ")}")
 
             val pb = ProcessBuilder(cmd).redirectErrorStream(false)

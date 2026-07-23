@@ -692,5 +692,12 @@ class PersistentState(context: Context) : SimpleKrate(context), KoinComponent {
       // SNI override sent in the QUIC ClientHello of the WARP MASQUE tunnel.
       // Defaults to "cloudflare.com". Capped at 20 chars in the UI.
       var warpSpoofedSni by stringPref("pref_warp_spoofed_sni").withDefault<String>("cloudflare.com")
+
+      // User-editable override for the full argument string passed to
+      // libusque.so when starting the SOCKS proxy. Empty string means
+      // "use the built-in default derived from warpSpoofedSni". Tokens
+      // {config} and {sni} are substituted at process-start time.
+      // See UsqueManager.buildSocksArgs / defaultSocksArgsTemplate.
+      var warpUsqueArgs by stringPref("pref_warp_usque_args").withDefault<String>("")
   }
 

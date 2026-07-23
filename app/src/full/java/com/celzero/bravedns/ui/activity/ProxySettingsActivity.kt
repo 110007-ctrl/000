@@ -318,6 +318,38 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
             restartWarpForSniChange("WARP restarted with new config")
         }
 
+        // libusque.so args editor: Reload pulls the currently-effective arg
+        // string (override or default template); Reset clears the override
+        // so the default template is used again; Save validates and stores
+        // the override then live-restarts WARP if it is running.
+        b.settingsActivityWarpArgsReloadBtn.setOnClickListener {
+            loadWarpArgsIntoEditor()
+            showToastUiCentered(this, "arguments reloaded", Toast.LENGTH_SHORT)
+        }
+
+        b.settingsActivityWarpArgsResetBtn.setOnClickListener {
+            UsqueManager.writeSocksArgs(this, "")
+            loadWarpArgsIntoEditor()
+            showToastUiCentered(this, "arguments reset to default", Toast.LENGTH_SHORT)
+            restartWarpForSniChange("WARP restarted with default arguments")
+        }
+
+        b.settingsActivityWarpArgsSaveBtn.setOnClickListener {
+            val text = b.settingsActivityWarpArgsEdit.text?.toString().orEmpty()
+            val ok = UsqueManager.writeSocksArgs(this, text)
+            if (!ok) {
+                showToastUiCentered(
+                    this,
+                    "Invalid arguments — must include {config}",
+                    Toast.LENGTH_LONG
+                )
+                return@setOnClickListener
+            }
+            loadWarpArgsIntoEditor()
+            showToastUiCentered(this, "arguments saved", Toast.LENGTH_SHORT)
+            restartWarpForSniChange("WARP restarted with new arguments")
+        }
+
         // Switch listener is attached (and re-attached safely) in updateWarpUi()
         // ===== END WARP SECTION =====
         b.settingsActivityWireguardContainer.setOnClickListener { openWireguardActivity() }
@@ -451,6 +483,16 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
         if (isRegistered && (!wasConfigRowVisible ||
                 b.settingsActivityWarpConfigEdit.text.isNullOrEmpty())) {
             loadWarpConfigIntoEditor()
+        }
+
+        // Args editor: shown once registered. Populate the field on first
+        // reveal or when it is empty so we do not clobber in-progress edits.
+        val wasArgsRowVisible = b.settingsActivityWarpArgsRow.isVisible
+        b.settingsActivityWarpArgsRow.visibility =
+            if (isRegistered) View.VISIBLE else View.GONE
+        if (isRegistered && (!wasArgsRowVisible ||
+                b.settingsActivityWarpArgsEdit.text.isNullOrEmpty())) {
+            loadWarpArgsIntoEditor()
         }
 
         // Switch row: only shown when registered
@@ -587,6 +629,14 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
     private fun loadWarpConfigIntoEditor() {
         val text = UsqueManager.readConfig(this)
         b.settingsActivityWarpConfigEdit.setText(text)
+    }
+
+    /** Pulls the currently-effective libusque.so arg string (user override
+     *  if saved, otherwise the default template with {config}/{sni} tokens
+     *  intact) and puts it into the editor. */
+    private fun loadWarpArgsIntoEditor() {
+        val text = UsqueManager.currentSocksArgsForEditor()
+        b.settingsActivityWarpArgsEdit.setText(text)
     }
 
     // ===== END WARP METHODS =====
