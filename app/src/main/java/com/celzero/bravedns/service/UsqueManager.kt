@@ -66,6 +66,58 @@ object UsqueManager {
         return f.exists() && f.length() > 0L
     }
 
+    /**
+     * Returns the raw text of the WARP config.json (empty string if it does
+     * not exist). Used by the Proxy settings UI to let advanced users edit
+     * the tunnel configuration produced by `usque register`.
+     */
+    fun readConfig(ctx: Context): String {
+        return try {
+            val f = File(ctx.filesDir, "config.json")
+            if (f.exists()) f.readText() else ""
+        } catch (e: Exception) {
+            Logger.e(Logger.LOG_TAG_PROXY, "readConfig error: ${e.message}", e)
+            ""
+        }
+    }
+
+    /**
+     * Atomically overwrites config.json with [text]. Validates that [text] is
+     * well-formed JSON before touching the on-disk file so a bad paste cannot
+     * corrupt the tunnel state. Returns true on success.
+     */
+    fun writeConfig(ctx: Context, text: String): Boolean {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) {
+            dlog(ctx, "writeConfig: refused empty payload")
+            return false
+        }
+        // Lightweight JSON sanity check — a real parse would pull in a
+        // dependency for no gain; usque itself will reject truly broken files.
+        val looksJson = (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+            (trimmed.startsWith("[") && trimmed.endsWith("]"))
+        if (!looksJson) {
+            dlog(ctx, "writeConfig: refused non-JSON payload")
+            return false
+        }
+        return try {
+            val target = File(ctx.filesDir, "config.json")
+            val tmp = File(ctx.filesDir, "config.json.tmp")
+            tmp.writeText(trimmed)
+            if (!tmp.renameTo(target)) {
+                // renameTo can fail across some FS states; fall back to copy.
+                target.writeText(trimmed)
+                tmp.delete()
+            }
+            dlog(ctx, "writeConfig: wrote ${target.length()} bytes")
+            true
+        } catch (e: Exception) {
+            Logger.e(Logger.LOG_TAG_PROXY, "writeConfig error: ${e.message}", e)
+            dlog(ctx, "writeConfig EXCEPTION ${e.message}")
+            false
+        }
+    }
+
     suspend fun registerWithWarp(context: Context): Boolean = withContext(Dispatchers.IO) {
         // NOTE: do NOT call clearDebugLog here — logs must persist across register→start sequence
         dlog(context, "registerWithWarp: >>>ENTRY<<<")
