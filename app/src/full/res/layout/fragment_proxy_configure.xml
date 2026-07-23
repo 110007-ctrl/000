@@ -273,6 +273,77 @@
                   android:textColor="?attr/primaryTextColor" />
           </LinearLayout>
 
+          <!-- config.json editor: advanced users can inspect/modify the
+               WARP registration payload produced by `usque register`. Hidden
+               until the device is registered. -->
+          <LinearLayout
+              android:id="@+id/settings_activity_warp_config_row"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="12dp"
+              android:orientation="vertical"
+              android:visibility="gone">
+
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:text="WARP config.json"
+                  android:textSize="14sp"
+                  android:textStyle="bold" />
+
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="2dp"
+                  android:text="Advanced. Save restarts WARP if it is running."
+                  android:textSize="11sp"
+                  android:alpha="0.7" />
+
+              <com.google.android.material.textfield.TextInputLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:hint="config.json">
+
+                  <com.google.android.material.textfield.TextInputEditText
+                      android:id="@+id/settings_activity_warp_config_edit"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:minLines="6"
+                      android:maxLines="18"
+                      android:gravity="top|start"
+                      android:inputType="textMultiLine|textNoSuggestions"
+                      android:fontFamily="monospace"
+                      android:textSize="12sp"
+                      android:scrollbars="vertical" />
+              </com.google.android.material.textfield.TextInputLayout>
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:gravity="end"
+                  android:orientation="horizontal">
+
+                  <com.google.android.material.button.MaterialButton
+                      android:id="@+id/settings_activity_warp_config_reload_btn"
+                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="Reload"
+                      android:textColor="?attr/primaryTextColor" />
+
+                  <com.google.android.material.button.MaterialButton
+                      android:id="@+id/settings_activity_warp_config_save_btn"
+                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_marginStart="8dp"
+                      android:text="Save"
+                      android:textColor="?attr/primaryTextColor" />
+              </LinearLayout>
+          </LinearLayout>
+
           <!-- Register button (centered, visible until registered) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/settings_activity_warp_register_btn"

@@ -294,6 +294,30 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
             restartWarpForSniChange("WARP restarted with default SNI")
         }
 
+        // config.json editor: Reload pulls the current file from disk;
+        // Save validates the payload and atomically overwrites, then live-
+        // restarts WARP if it's already running so the new config takes
+        // effect without the user toggling the switch.
+        b.settingsActivityWarpConfigReloadBtn.setOnClickListener {
+            loadWarpConfigIntoEditor()
+            showToastUiCentered(this, "config.json reloaded", Toast.LENGTH_SHORT)
+        }
+
+        b.settingsActivityWarpConfigSaveBtn.setOnClickListener {
+            val text = b.settingsActivityWarpConfigEdit.text?.toString().orEmpty()
+            if (text.isBlank()) {
+                showToastUiCentered(this, "config.json is empty", Toast.LENGTH_SHORT)
+                return@setOnClickListener
+            }
+            val ok = UsqueManager.writeConfig(this, text)
+            if (!ok) {
+                showToastUiCentered(this, "Invalid config.json — not saved", Toast.LENGTH_LONG)
+                return@setOnClickListener
+            }
+            showToastUiCentered(this, "config.json saved", Toast.LENGTH_SHORT)
+            restartWarpForSniChange("WARP restarted with new config")
+        }
+
         // Switch listener is attached (and re-attached safely) in updateWarpUi()
         // ===== END WARP SECTION =====
         b.settingsActivityWireguardContainer.setOnClickListener { openWireguardActivity() }
@@ -417,6 +441,17 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
         // Register button: only shown when not yet registered
         b.settingsActivityWarpRegisterBtn.visibility =
             if (isRegistered) View.GONE else View.VISIBLE
+
+        // config.json editor row: only meaningful once registered (a config
+        // file exists on disk). Populate the field the first time the row
+        // becomes visible so we don't clobber in-progress edits on refresh.
+        val wasConfigRowVisible = b.settingsActivityWarpConfigRow.isVisible
+        b.settingsActivityWarpConfigRow.visibility =
+            if (isRegistered) View.VISIBLE else View.GONE
+        if (isRegistered && (!wasConfigRowVisible ||
+                b.settingsActivityWarpConfigEdit.text.isNullOrEmpty())) {
+            loadWarpConfigIntoEditor()
+        }
 
         // Switch row: only shown when registered
         val wasSwitchRowVisible = b.settingsActivityWarpSwitchRow.isVisible
@@ -546,6 +581,12 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
                 updateWarpUi()
             }
         }
+    }
+
+    /** Reads config.json off disk and puts its raw text into the editor. */
+    private fun loadWarpConfigIntoEditor() {
+        val text = UsqueManager.readConfig(this)
+        b.settingsActivityWarpConfigEdit.setText(text)
     }
 
     // ===== END WARP METHODS =====
