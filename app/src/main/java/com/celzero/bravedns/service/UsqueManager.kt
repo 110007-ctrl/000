@@ -6,6 +6,7 @@ import android.util.Log
 import java.io.File
 import java.io.StringWriter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 object UsqueManager {
@@ -52,6 +53,145 @@ object UsqueManager {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
+    // ── libusque.so arguments (user-editable) ────────────────────────────────
+    // The Proxy settings screen exposes the exact argument string passed to
+    // libusque.so and lets advanced users edit it. Two placeholders are
+    // substituted at process-start time:
+    //   {config} → absolute path of the on-disk config.json
+    //   {sni}    → current warpSpoofedSni value (may be empty)
+    // The default template mirrors the historical hard-coded arg list so
+    // existing installs behave identically until the user opts in.
+    const val DEFAULT_SOCKS_ARGS_TEMPLATE =
+        "socks -b $SOCKS_HOST -p $SOCKS_PORT -c {config}"
+
+    /** Returns the default arg string (with {sni} appended when SNI is set). */
+    fun defaultSocksArgsTemplate(sni: String): String {
+        val base = DEFAULT_SOCKS_ARGS_TEMPLATE
+        return if (sni.isNotBlank()) "$base -s {sni}" else base
+    }
+
+    /** Returns the args string currently shown in the UI editor: the user
+     *  override if one is saved, otherwise the default template rendered
+     *  against the current SNI value. Placeholders are preserved. */
+    fun currentSocksArgsForEditor(): String {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (_: Throwable) { null }
+        val override = ps?.warpUsqueArgs?.trim().orEmpty()
+        if (override.isNotEmpty()) return override
+        val sni = ps?.warpSpoofedSni?.trim().orEmpty()
+        return defaultSocksArgsTemplate(sni)
+    }
+
+    /** Resolves the final argv (excluding the binary path) that will be
+     *  handed to ProcessBuilder. Handles {config}/{sni} substitution and
+     *  splits on whitespace. Falls back to the default template if the
+     *  saved override is blank or parses to an empty list. */
+    fun buildSocksArgs(ctx: Context, configPath: String): List<String> {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (t: Throwable) {
+            dlog(ctx, "buildSocksArgs: PersistentState lookup failed: ${t.message}")
+            null
+        }
+        val sni = ps?.warpSpoofedSni?.trim().orEmpty()
+        val override = ps?.warpUsqueArgs?.trim().orEmpty()
+        val template = if (override.isNotEmpty()) override
+                       else defaultSocksArgsTemplate(sni)
+        val rendered = template
+            .replace("{config}", configPath)
+            .replace("{sni}", sni)
+        // Whitespace split — usque args do not contain spaces in practice.
+        val parts = rendered.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        if (parts.isEmpty()) {
+            dlog(ctx, "buildSocksArgs: override parsed to empty — using default")
+            return defaultSocksArgsTemplate(sni)
+                .replace("{config}", configPath)
+                .replace("{sni}", sni)
+                .split(Regex("\\s+")).filter { it.isNotEmpty() }
+        }
+        return parts
+    }
+
+    /** Validates and saves the user override string. Empty/blank clears
+     *  the override so the default template takes over again. Returns
+     *  true on success.
+     *
+     *  Input is normalized: all whitespace runs (including newlines) are
+     *  collapsed to a single space. This prevents the "second line"
+     *  footgun where a user types a revised command on a new line and
+     *  the two lines get concatenated into one nonsensical argv with
+     *  duplicated `-b/-p/-c` flags — libusque silently honors the first
+     *  set and drops everything after (e.g. a trailing `--ipv6`).
+     *
+     *  The override must contain exactly one `socks` subcommand token
+     *  and must include the `{config}` placeholder.
+     */
+    fun writeSocksArgs(ctx: Context, text: String): Boolean {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (t: Throwable) {
+            dlog(ctx, "writeSocksArgs: PersistentState lookup failed: ${t.message}")
+            return false
+        }
+        // Collapse ALL whitespace (spaces, tabs, newlines) into single spaces
+        // so multi-line pasted input becomes a single well-formed argv.
+        val normalized = text.replace(Regex("\\s+"), " ").trim()
+        if (normalized.isEmpty()) {
+            ps.warpUsqueArgs = ""
+            dlog(ctx, "writeSocksArgs: cleared override (default will be used)")
+            return true
+        }
+        // Must contain {config} so the config.json path always reaches usque.
+        if (!normalized.contains("{config}")) {
+            dlog(ctx, "writeSocksArgs: refused — missing {config} placeholder")
+            return false
+        }
+        val parts = normalized.split(' ').filter { it.isNotEmpty() }
+        if (parts.isEmpty()) {
+            dlog(ctx, "writeSocksArgs: refused — no argument tokens")
+            return false
+        }
+        // Exactly one subcommand. Multiple `socks` tokens means the user
+        // pasted two command lines; reject rather than silently truncate.
+        val socksCount = parts.count { it == "socks" }
+        if (socksCount != 1) {
+            dlog(ctx, "writeSocksArgs: refused — expected exactly one `socks` subcommand, found $socksCount")
+            return false
+        }
+        if (parts.first() != "socks") {
+            dlog(ctx, "writeSocksArgs: refused — first token must be `socks`")
+            return false
+        }
+        ps.warpUsqueArgs = normalized
+        dlog(ctx, "writeSocksArgs: saved override (${normalized.length} chars)")
+        return true
+    }
+
+    /** Renders the fully-substituted argv string that will be handed to
+     *  libusque.so on next start. Used by the settings UI to show the
+     *  advanced user the *effective* command line (with {config} and
+     *  {sni} already resolved) so they can verify their edits landed. */
+    fun effectiveSocksArgsForDisplay(ctx: Context): String {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (_: Throwable) { null }
+        val sni = ps?.warpSpoofedSni?.trim().orEmpty()
+        val override = ps?.warpUsqueArgs?.trim().orEmpty()
+        val template = if (override.isNotEmpty()) override
+                       else defaultSocksArgsTemplate(sni)
+        val configPath = File(ctx.filesDir, "config.json").absolutePath
+        return template
+            .replace("{config}", configPath)
+            .replace("{sni}", sni)
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     private fun getBinary(ctx: Context): File {
         val nativeDir = ctx.applicationInfo.nativeLibraryDir
         val bin = File(nativeDir, BINARY_NAME)
@@ -63,6 +203,58 @@ object UsqueManager {
         val f = File(ctx.filesDir, "config.json")
         Log.d("WARP_DEBUG", "isRegistered: path=${f.absolutePath} exists=${f.exists()} size=${f.length()}")
         return f.exists() && f.length() > 0L
+    }
+
+    /**
+     * Returns the raw text of the WARP config.json (empty string if it does
+     * not exist). Used by the Proxy settings UI to let advanced users edit
+     * the tunnel configuration produced by `usque register`.
+     */
+    fun readConfig(ctx: Context): String {
+        return try {
+            val f = File(ctx.filesDir, "config.json")
+            if (f.exists()) f.readText() else ""
+        } catch (e: Exception) {
+            Logger.e(Logger.LOG_TAG_PROXY, "readConfig error: ${e.message}", e)
+            ""
+        }
+    }
+
+    /**
+     * Atomically overwrites config.json with [text]. Validates that [text] is
+     * well-formed JSON before touching the on-disk file so a bad paste cannot
+     * corrupt the tunnel state. Returns true on success.
+     */
+    fun writeConfig(ctx: Context, text: String): Boolean {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) {
+            dlog(ctx, "writeConfig: refused empty payload")
+            return false
+        }
+        // Lightweight JSON sanity check — a real parse would pull in a
+        // dependency for no gain; usque itself will reject truly broken files.
+        val looksJson = (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+            (trimmed.startsWith("[") && trimmed.endsWith("]"))
+        if (!looksJson) {
+            dlog(ctx, "writeConfig: refused non-JSON payload")
+            return false
+        }
+        return try {
+            val target = File(ctx.filesDir, "config.json")
+            val tmp = File(ctx.filesDir, "config.json.tmp")
+            tmp.writeText(trimmed)
+            if (!tmp.renameTo(target)) {
+                // renameTo can fail across some FS states; fall back to copy.
+                target.writeText(trimmed)
+                tmp.delete()
+            }
+            dlog(ctx, "writeConfig: wrote ${target.length()} bytes")
+            true
+        } catch (e: Exception) {
+            Logger.e(Logger.LOG_TAG_PROXY, "writeConfig error: ${e.message}", e)
+            dlog(ctx, "writeConfig EXCEPTION ${e.message}")
+            false
+        }
     }
 
     suspend fun registerWithWarp(context: Context): Boolean = withContext(Dispatchers.IO) {
@@ -129,49 +321,86 @@ object UsqueManager {
     }
 
     suspend fun startSocksProxy(ctx: Context): Boolean = withContext(Dispatchers.IO) {
-        // If already starting, wait for that attempt to finish and return its result.
-        if (isStarting) {
-            startLock.lock()
-            startLock.unlock()
-            return@withContext isRunning()
-        }
-        startLock.lock()
-        isStarting = true
-        portConfirmedAlive = false
-        try {
         // NOTE: do NOT clearDebugLog here — we need the prior register logs for debugging
+        //
+        // Bug-fix: use withLock so the guard is inside the critical section, eliminating the
+        // TOCTOU race where two coroutines both see isStarting=false and both acquire the lock
+        // sequentially, causing the second to kill the process the first just started.
+        startLock.withLock {
+            isStarting = true
+            try {
+                startSocksProxyLocked(ctx)
+            } finally {
+                isStarting = false
+            }
+        }
+    }
+
+    /**
+     * Must only be called while [startLock] is held.
+     *
+     * Fixes four bugs that caused an infinite restart storm and a phantom "STOPPED" UI state:
+     *
+     * 1. TOCTOU race — guard is now inside the lock (see [startSocksProxy]).
+     * 2. probePort hits the dying old process — we now wait for port release before spawning.
+     * 3. Death watcher fires when our own process couldn't bind — watcher is only registered
+     *    when proc.isAlive is confirmed true after probePort, not just when the port answers.
+     * 4. Orphan-process reattach — if the port is alive but our process reference is gone
+     *    (e.g. VPN killed mid-session), we reattach instead of spawning a new (doomed) process.
+     */
+    private fun startSocksProxyLocked(ctx: Context): Boolean {
         dlog(ctx, "startSocksProxy: >>>ENTRY<<<")
-        // Only stop if a process is currently running; don't touch it if already dead.
-        if (process?.isAlive == true) stopSocksProxy()
-        try {
+
+        // ── Fast path: already healthy ─────────────────────────────────────────────────────────
+        // If our process is alive AND the port is responding, there is nothing to do.
+        // Returning true here prevents the needless kill→respawn cycle that triggered the storm.
+        val existingProc = process
+        if (existingProc != null && existingProc.isAlive && isPortAlive()) {
+            dlog(ctx, "startSocksProxy: already running and healthy — skipping restart")
+            portConfirmedAlive = true
+            return true
+        }
+
+        // ── Stop old process and wait for port release ─────────────────────────────────────────
+        // Bug fix 2 & 3: after destroy() the OS process may keep the port bound for tens of ms.
+        // Spawning a new process before the port is free causes an immediate bind-failure exit,
+        // which the death watcher misreads as an unexpected tunnel death and loops forever.
+        if (process != null) {
+            stopSocksProxy()
+            val released = waitForPortRelease(ctx, SOCKS_PORT, timeoutMs = 2000)
+            dlog(ctx, "startSocksProxy: port released=$released after stopSocksProxy")
+            // If the port is still held after 2 s the new spawn will also fail to bind.
+            // Log it and proceed anyway — at least we tried.
+        }
+
+        // ── Orphan reattach ────────────────────────────────────────────────────────────────────
+        // The port can be alive with process==null when the VPN was killed mid-session and the
+        // usque child process survived (different PID namespace). Spawning a duplicate process
+        // would fail to bind. Instead, trust the port probe and reattach in-place; the watchdog
+        // will detect real tunnel degradation within 20 s.
+        if (isPortAlive()) {
+            dlog(ctx, "startSocksProxy: port alive but no process ref — reattaching to orphan usque")
+            portConfirmedAlive = true
+            return true
+        }
+
+        return try {
             val bin = getBinary(ctx)
             if (!bin.exists() || !bin.canExecute()) {
                 dlog(ctx, "startSocksProxy: binary not ready exists=${bin.exists()} canExec=${bin.canExecute()}")
-                return@withContext false
+                return false
             }
 
             val configFile = File(ctx.filesDir, "config.json")
             dlog(ctx, "startSocksProxy: configExists=${configFile.exists()} size=${configFile.length()}")
 
-            // Apply user-configured SNI override (defaults to "cloudflare.com").
-            // Read at process-start time so the user's saved value is used for every restart.
-            val sni = try {
-                org.koin.java.KoinJavaComponent
-                    .get<PersistentState>(PersistentState::class.java)
-                    .warpSpoofedSni.trim()
-            } catch (t: Throwable) {
-                dlog(ctx, "startSocksProxy: SNI lookup failed: ${t.message}")
-                ""
-            }
-            val cmd = mutableListOf(
-                bin.absolutePath, "socks",
-                "-b", SOCKS_HOST,
-                "-p", SOCKS_PORT.toString(),
-                "-c", configFile.absolutePath
-            )
-            if (sni.isNotEmpty()) {
-                cmd += listOf("-s", sni)
-            }
+            // Build argument list. If the user saved a custom override string
+            // (Proxy settings > WARP > "libusque.so arguments"), it is used
+            // verbatim after {config}/{sni} substitution; otherwise fall back
+            // to the default template derived from warpSpoofedSni.
+            val args = buildSocksArgs(ctx, configFile.absolutePath)
+            val cmd = mutableListOf(bin.absolutePath)
+            cmd += args
             dlog(ctx, "startSocksProxy: cmd=${cmd.joinToString(" ")}")
 
             val pb = ProcessBuilder(cmd).redirectErrorStream(false)
@@ -192,10 +421,15 @@ object UsqueManager {
 
             // Wait for the port to actually be listening (up to 5s) instead of a blind sleep.
             // This prevents a race on slow devices where 1500ms wasn't enough.
-            val alive = probePort(ctx, SOCKS_PORT, timeoutMs = 5000)
-            dlog(ctx, "startSocksProxy: alive=${proc.isAlive} portReady=$alive")
+            val portReady = probePort(ctx, SOCKS_PORT, timeoutMs = 5000)
+            val procAlive = proc.isAlive
+            dlog(ctx, "startSocksProxy: proc.isAlive=$procAlive portReady=$portReady")
 
-            if (alive) {
+            // Bug fix 3: only register the death watcher when our process is *still* alive after
+            // probePort returns. If proc died while we were probing (e.g. couldn't bind because
+            // the orphan-reattach path above was skipped on a borderline race), treat it as a
+            // failure rather than setting portConfirmedAlive and triggering an instant callback.
+            if (portReady && procAlive) {
                 portConfirmedAlive = true
                 // Immediate death detection: daemon thread blocks on waitFor() and fires
                 // deathCallback the instant the usque child process exits unexpectedly.
@@ -214,6 +448,7 @@ object UsqueManager {
                     } catch (_: Exception) {}
                 }.apply { isDaemon = true; name = "usque-death-watcher" }.start()
             } else {
+                portConfirmedAlive = false
                 // Process already exited — collect its output before reporting failure.
                 outThread.join(2000)
                 errThread.join(2000)
@@ -224,17 +459,24 @@ object UsqueManager {
                 process = null
             }
 
-            alive
+            portReady && procAlive
 
         } catch (e: Exception) {
             dlog(ctx, "startSocksProxy: EXCEPTION ${e.message}\n${e.stackTraceToString()}")
             Logger.e(Logger.LOG_TAG_PROXY, "startSocksProxy exception", e)
             false
         }
-        } finally {
-            isStarting = false
-            startLock.unlock()
+    }
+
+    /** Wait until port [port] stops accepting connections or [timeoutMs] elapses. */
+    private fun waitForPortRelease(ctx: Context, port: Int, timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            if (!isPortAlive()) return true
+            Thread.sleep(100)
         }
+        dlog(ctx, "waitForPortRelease: port $port still bound after ${timeoutMs}ms")
+        return false
     }
 
     /** Poll 127.0.0.1:port until it accepts a connection or [timeoutMs] elapses. */

@@ -273,6 +273,184 @@
                   android:textColor="?attr/primaryTextColor" />
           </LinearLayout>
 
+          <!-- config.json editor: advanced users can inspect/modify the
+               WARP registration payload produced by `usque register`. Hidden
+               until the device is registered. -->
+          <LinearLayout
+              android:id="@+id/settings_activity_warp_config_row"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="12dp"
+              android:orientation="vertical"
+              android:visibility="gone">
+
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:text="WARP config.json"
+                  android:textSize="14sp"
+                  android:textStyle="bold" />
+
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="2dp"
+                  android:text="Advanced. Save restarts WARP if it is running."
+                  android:textSize="11sp"
+                  android:alpha="0.7" />
+
+              <com.google.android.material.textfield.TextInputLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:hint="config.json">
+
+                  <com.google.android.material.textfield.TextInputEditText
+                      android:id="@+id/settings_activity_warp_config_edit"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:minLines="6"
+                      android:maxLines="18"
+                      android:gravity="top|start"
+                      android:inputType="textMultiLine|textNoSuggestions"
+                      android:fontFamily="monospace"
+                      android:textSize="12sp"
+                      android:scrollbars="vertical" />
+              </com.google.android.material.textfield.TextInputLayout>
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:gravity="end"
+                  android:orientation="horizontal">
+
+                  <com.google.android.material.button.MaterialButton
+                      android:id="@+id/settings_activity_warp_config_reload_btn"
+                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="Reload"
+                      android:textColor="?attr/primaryTextColor" />
+
+                  <com.google.android.material.button.MaterialButton
+                      android:id="@+id/settings_activity_warp_config_save_btn"
+                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_marginStart="8dp"
+                      android:text="Save"
+                      android:textColor="?attr/primaryTextColor" />
+              </LinearLayout>
+          </LinearLayout>
+
+          <!-- libusque.so argument editor: shows the exact CLI args passed
+               to the WARP binary and lets advanced users override them.
+               {config} is replaced with the on-disk config.json path,
+               {sni} with the current spoofed-SNI setting. Save restarts
+               WARP if it is running. Reset restores the default template. -->
+          <LinearLayout
+              android:id="@+id/settings_activity_warp_args_row"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="12dp"
+              android:orientation="vertical"
+              android:visibility="gone">
+
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:text="libusque.so arguments"
+                  android:textSize="14sp"
+                  android:textStyle="bold" />
+
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="2dp"
+                  android:text="Advanced. Space-separated. Use {config} for the config.json path and {sni} for the spoofed SNI. Save restarts WARP if it is running."
+                  android:textSize="11sp"
+                  android:alpha="0.7" />
+
+              <com.google.android.material.textfield.TextInputLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:hint="socks -b 127.0.0.1 -p 40000 -c {config}">
+
+                  <com.google.android.material.textfield.TextInputEditText
+                      android:id="@+id/settings_activity_warp_args_edit"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:minLines="2"
+                      android:maxLines="6"
+                      android:gravity="top|start"
+                      android:inputType="textMultiLine|textNoSuggestions"
+                      android:autoLink="none"
+                      android:linksClickable="false"
+                      android:fontFamily="monospace"
+                      android:textSize="12sp"
+                      android:scrollbars="vertical" />
+              </com.google.android.material.textfield.TextInputLayout>
+
+              <!-- Read-only echo of the fully-substituted argv that will
+                   be passed to libusque.so on next start. Updates after
+                   Save / Reset / Reload so advanced users can verify their
+                   edits actually landed (e.g. that `--ipv6` is present). -->
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="4dp"
+                  android:text="Effective args (next start):"
+                  android:textSize="11sp"
+                  android:alpha="0.7" />
+
+              <TextView
+                  android:id="@+id/settings_activity_warp_args_effective"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="2dp"
+                  android:fontFamily="monospace"
+                  android:textSize="11sp"
+                  android:textIsSelectable="true"
+                  android:textColor="?attr/accentGood" />
+
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:gravity="end"
+                  android:orientation="horizontal">
+
+                  <com.google.android.material.button.MaterialButton
+                      android:id="@+id/settings_activity_warp_args_reset_btn"
+                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="Reset"
+                      android:textColor="?attr/primaryTextColor" />
+
+                  <com.google.android.material.button.MaterialButton
+                      android:id="@+id/settings_activity_warp_args_reload_btn"
+                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_marginStart="8dp"
+                      android:text="Reload"
+                      android:textColor="?attr/primaryTextColor" />
+
+                  <com.google.android.material.button.MaterialButton
+                      android:id="@+id/settings_activity_warp_args_save_btn"
+                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_marginStart="8dp"
+                      android:text="Save"
+                      android:textColor="?attr/primaryTextColor" />
+              </LinearLayout>
+          </LinearLayout>
+
           <!-- Register button (centered, visible until registered) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/settings_activity_warp_register_btn"
