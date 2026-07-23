@@ -586,6 +586,78 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+
+                <RelativeLayout
+                    android:id="@+id/settings_activity_ip_rl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingTop="15dp"
+                    android:paddingBottom="15dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/settings_activity_ip_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_marginBottom="5dp"
+                        android:alpha="0.5"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_ip_network" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/settings_activity_ip_img"
+                        android:layout_toEndOf="@id/settings_activity_ip_icon"
+                        android:orientation="vertical">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/gen_settings_ip_txt"
+                            style="@style/TextAppearance.AppCompat.Subhead"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_ip_network_heading"
+                            android:textSize="@dimen/large_font_text_view" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/gen_settings_ip_desc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingTop="5dp"
+                            android:text="@string/settings_ip_network_desc"
+                            android:textSize="@dimen/default_font_text_view" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/settings_activity_ip_img"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="10dp"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_right_arrow_white" />
+
+                </RelativeLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settings_activity_wireguard_text"
             style="@style/TextAppearance.AppCompat.Subhead"
@@ -1126,63 +1198,6 @@
 
                 </RelativeLayout>
 
-                <RelativeLayout
-                    android:id="@+id/settings_activity_ip_rl"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:paddingTop="15dp"
-                    android:paddingBottom="15dp">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/settings_activity_ip_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_marginBottom="5dp"
-                        android:alpha="0.5"
-                        android:padding="10dp"
-                        android:src="@drawable/ic_ip_network" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_toStartOf="@id/settings_activity_ip_img"
-                        android:layout_toEndOf="@id/settings_activity_ip_icon"
-                        android:orientation="vertical">
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/gen_settings_ip_txt"
-                            style="@style/TextAppearance.AppCompat.Subhead"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/settings_ip_network_heading"
-                            android:textSize="@dimen/large_font_text_view" />
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/gen_settings_ip_desc"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingTop="5dp"
-                            android:text="@string/settings_ip_network_desc"
-                            android:textSize="@dimen/default_font_text_view" />
-                    </LinearLayout>
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/settings_activity_ip_img"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:layout_marginEnd="10dp"
-                        android:padding="10dp"
-                        android:src="@drawable/ic_right_arrow_white" />
-
-                </RelativeLayout>
 
                 <RelativeLayout
                     android:id="@+id/settings_activity_ptrans_rl"
