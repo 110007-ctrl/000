@@ -117,7 +117,18 @@ object UsqueManager {
 
     /** Validates and saves the user override string. Empty/blank clears
      *  the override so the default template takes over again. Returns
-     *  true on success. */
+     *  true on success.
+     *
+     *  Input is normalized: all whitespace runs (including newlines) are
+     *  collapsed to a single space. This prevents the "second line"
+     *  footgun where a user types a revised command on a new line and
+     *  the two lines get concatenated into one nonsensical argv with
+     *  duplicated `-b/-p/-c` flags — libusque silently honors the first
+     *  set and drops everything after (e.g. a trailing `--ipv6`).
+     *
+     *  The override must contain exactly one `socks` subcommand token
+     *  and must include the `{config}` placeholder.
+     */
     fun writeSocksArgs(ctx: Context, text: String): Boolean {
         val ps = try {
             org.koin.java.KoinJavaComponent
@@ -126,27 +137,59 @@ object UsqueManager {
             dlog(ctx, "writeSocksArgs: PersistentState lookup failed: ${t.message}")
             return false
         }
-        val trimmed = text.trim()
-        if (trimmed.isEmpty()) {
+        // Collapse ALL whitespace (spaces, tabs, newlines) into single spaces
+        // so multi-line pasted input becomes a single well-formed argv.
+        val normalized = text.replace(Regex("\\s+"), " ").trim()
+        if (normalized.isEmpty()) {
             ps.warpUsqueArgs = ""
             dlog(ctx, "writeSocksArgs: cleared override (default will be used)")
             return true
         }
         // Must contain {config} so the config.json path always reaches usque.
-        if (!trimmed.contains("{config}")) {
+        if (!normalized.contains("{config}")) {
             dlog(ctx, "writeSocksArgs: refused — missing {config} placeholder")
             return false
         }
-        // Non-empty tokens after split.
-        val parts = trimmed.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val parts = normalized.split(' ').filter { it.isNotEmpty() }
         if (parts.isEmpty()) {
             dlog(ctx, "writeSocksArgs: refused — no argument tokens")
             return false
         }
-        ps.warpUsqueArgs = trimmed
-        dlog(ctx, "writeSocksArgs: saved override (${trimmed.length} chars)")
+        // Exactly one subcommand. Multiple `socks` tokens means the user
+        // pasted two command lines; reject rather than silently truncate.
+        val socksCount = parts.count { it == "socks" }
+        if (socksCount != 1) {
+            dlog(ctx, "writeSocksArgs: refused — expected exactly one `socks` subcommand, found $socksCount")
+            return false
+        }
+        if (parts.first() != "socks") {
+            dlog(ctx, "writeSocksArgs: refused — first token must be `socks`")
+            return false
+        }
+        ps.warpUsqueArgs = normalized
+        dlog(ctx, "writeSocksArgs: saved override (${normalized.length} chars)")
         return true
     }
+
+    /** Renders the fully-substituted argv string that will be handed to
+     *  libusque.so on next start. Used by the settings UI to show the
+     *  advanced user the *effective* command line (with {config} and
+     *  {sni} already resolved) so they can verify their edits landed. */
+    fun effectiveSocksArgsForDisplay(ctx: Context): String {
+        val ps = try {
+            org.koin.java.KoinJavaComponent
+                .get<PersistentState>(PersistentState::class.java)
+        } catch (_: Throwable) { null }
+        val sni = ps?.warpSpoofedSni?.trim().orEmpty()
+        val override = ps?.warpUsqueArgs?.trim().orEmpty()
+        val template = if (override.isNotEmpty()) override
+                       else defaultSocksArgsTemplate(sni)
+        val configPath = File(ctx.filesDir, "config.json").absolutePath
+        return template
+            .replace("{config}", configPath)
+            .replace("{sni}", sni)
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun getBinary(ctx: Context): File {

@@ -386,10 +386,35 @@
                       android:maxLines="6"
                       android:gravity="top|start"
                       android:inputType="textMultiLine|textNoSuggestions"
+                      android:autoLink="none"
+                      android:linksClickable="false"
                       android:fontFamily="monospace"
                       android:textSize="12sp"
                       android:scrollbars="vertical" />
               </com.google.android.material.textfield.TextInputLayout>
+
+              <!-- Read-only echo of the fully-substituted argv that will
+                   be passed to libusque.so on next start. Updates after
+                   Save / Reset / Reload so advanced users can verify their
+                   edits actually landed (e.g. that `--ipv6` is present). -->
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="4dp"
+                  android:text="Effective args (next start):"
+                  android:textSize="11sp"
+                  android:alpha="0.7" />
+
+              <TextView
+                  android:id="@+id/settings_activity_warp_args_effective"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="2dp"
+                  android:fontFamily="monospace"
+                  android:textSize="11sp"
+                  android:textIsSelectable="true"
+                  android:textColor="?attr/accentGood" />
+
 
               <LinearLayout
                   android:layout_width="match_parent"

@@ -633,11 +633,17 @@ class ProxySettingsActivity : AppCompatActivity(R.layout.fragment_proxy_configur
 
     /** Pulls the currently-effective libusque.so arg string (user override
      *  if saved, otherwise the default template with {config}/{sni} tokens
-     *  intact) and puts it into the editor. */
+     *  intact) and puts it into the editor. Also refreshes the read-only
+     *  "effective args" line beneath the editor so advanced users can see
+     *  the fully-substituted argv that will be handed to libusque on the
+     *  next start. */
     private fun loadWarpArgsIntoEditor() {
         val text = UsqueManager.currentSocksArgsForEditor()
         b.settingsActivityWarpArgsEdit.setText(text)
+        b.settingsActivityWarpArgsEffective.text =
+            UsqueManager.effectiveSocksArgsForDisplay(this)
     }
+
 
     // ===== END WARP METHODS =====
 
