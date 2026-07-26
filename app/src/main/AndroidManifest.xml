@@ -99,8 +99,26 @@
         this data via Auto Backup to Google Drive or a device transfer would expose
         cryptographic key material.
     -->
+    <!--
+        AVAILABILITY FIX — process is being killed by lowmemorykiller / OEM task killers.
+
+        This APK is built as a privileged, system_ext, platform-signed app
+        (see Android.bp: privileged: true, platform_apis: true). On such a build
+        android:persistent="true" is honoured by ActivityManager:
+          * the process is started at boot, before the launcher;
+          * it is excluded from lowmemorykiller and from "clear all"/task killers;
+          * if it ever does die (native crash, SIGKILL) AMS restarts it immediately.
+        This is the supported way to keep a carrier-device resolver from blacking
+        out the network, and it is deliberately paired with the boot receiver and
+        with onTaskRemoved()/START_STICKY in BraveVPNService so a non-privileged
+        build still recovers, just less strongly.
+
+        NOTE: android:persistent is a no-op (and lint-ignored) for non-system
+        installs, so it is safe to keep in a single shared manifest.
+    -->
     <application
         android:name=".RethinkDnsApplication"
+        android:persistent="true"
         android:allowBackup="false"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -112,7 +130,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:networkSecurityConfig="@xml/network_security_config"
-        tools:ignore="ForegroundServicePermission">
+        tools:ignore="ForegroundServicePermission,PersistentAttribute">
 
         <activity
             android:name=".ui.PrepareVpnActivity"

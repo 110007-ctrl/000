@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
+    <!-- Doze / App Standby exemption: the resolver must keep servicing DNS while
+         the device is idle, otherwise every app on the device loses name resolution. -->
     <allow-in-power-save package="com.celzero.bravedns" />
+    <!-- Data Saver exemption: without this the tunnel's own upstream (DoH/DoT/WireGuard)
+         is blocked in the background when Data Saver is on, which looks like a total
+         network blackout to the user. -->
+    <allow-in-data-usage-save package="com.celzero.bravedns" />
     <install-in-user-type package="com.celzero.bravedns">
         <install-in user-type="SYSTEM" />
     </install-in-user-type>

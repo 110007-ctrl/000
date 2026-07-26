@@ -173,6 +173,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlin.math.min
@@ -299,6 +300,9 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         private const val TAG = "VpnService;"
         const val SERVICE_ID = 1 // Only has to be unique within this app.
         const val MEMORY_NOTIFICATION_ID = 29001
+
+        // min gap between two low-memory warnings; onTrimMemory can fire in tight bursts
+        private const val MEMORY_NOTIFICATION_THROTTLE_MS = 5 * 60 * 1000L
         const val NW_ENGINE_NOTIFICATION_ID = 29002
 
         private const val MAIN_CHANNEL_ID = "vpn"
@@ -376,6 +380,9 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
 
     private val appConfig by inject<AppConfig>()
     private val persistentState by inject<PersistentState>()
+
+    // last time the low-memory warning was shown; guards notification storms (see onTrimMemory)
+    private val lastMemoryNotificationMs = AtomicLong(0L)
     private val rdb by inject<RefreshDatabase>()
     private val netLogTracker by inject<NetLogTracker>()
 
@@ -6179,17 +6186,50 @@ class BraveVPNService : VpnService(), ConnectionMonitor.NetworkListener, Bridge,
         return vpnAdapter?.p50(id) ?: -1L
     }
 
+    /**
+     * The process hosting this service is the device's only resolver: if it dies, every
+     * app on the device loses DNS. Swiping the task away (or an OEM "clear all") must not
+     * take the tunnel down.
+     *
+     * android:stopWithTask="false" already prevents the framework from destroying the
+     * service, but several OEM launchers additionally SIGKILL the process. Re-issuing a
+     * foreground start-command here means that when the process is respawned (START_STICKY
+     * / android:persistent) it comes back with a valid start intent instead of a null one.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Logger.i(LOG_TAG_VPN, "onTaskRemoved: task swiped away, keeping vpn alive")
+        try {
+            if (VpnController.state().activationRequested) {
+                val restart = Intent(applicationContext, BraveVPNService::class.java)
+                ContextCompat.startForegroundService(applicationContext, restart)
+            }
+        } catch (e: Exception) {
+            // never propagate: an exception here kills the very process we are protecting
+            Logger.w(LOG_TAG_VPN, "onTaskRemoved restart failed: ${e.message}")
+        }
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onTrimMemory(level: Int) {
         // override onLowMemory is deprecated, so use onTrimMemory
         // ref: developer.android.com/reference/android/net/VpnService
         super.onTrimMemory(level)
         Logger.i(LOG_TAG_VPN, "onTrimMemory: $level")
-        if (level >= TRIM_MEMORY_BACKGROUND) {
-            // TODO: call go to clear the cache
-            // show notification to user, that the app is consuming more memory
-            showMemoryNotification()
-        }
+        // always release what we can, at every level: the cheapest way to avoid being
+        // picked by lowmemorykiller is to shrink before the kill decision is made.
         io("onLowMem") { vpnAdapter?.onLowMemory() }
+
+        if (level < TRIM_MEMORY_BACKGROUND) return
+
+        // Notifying on *every* trim callback is counter-productive: the system can fire
+        // onTrimMemory many times per second under pressure, and each notify() allocates
+        // a Notification + Bitmap on the very heap we are trying to relieve (and wakes
+        // the NotificationManagerService). Throttle to one warning per interval.
+        val now = elapsedRealtime()
+        val last = lastMemoryNotificationMs.get()
+        if (now - last < MEMORY_NOTIFICATION_THROTTLE_MS) return
+        if (!lastMemoryNotificationMs.compareAndSet(last, now)) return
+        showMemoryNotification()
     }
 
     private fun showMemoryNotification() {
